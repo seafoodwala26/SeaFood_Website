@@ -1,0 +1,10 @@
+# *
+User-agent: *
+Allow: /
+Disallow: /admin
+
+# Host
+Host: https://seafoodwala.in/
+
+# Sitemaps
+Sitemap: https://seafoodwala.in/sitemap.xml
