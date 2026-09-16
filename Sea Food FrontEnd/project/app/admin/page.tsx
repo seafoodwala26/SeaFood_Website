@@ -1,27 +1,44 @@
-import { cookies } from 'next/headers';
-import { redirect } from 'next/navigation';
+'use client';
+
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import AdminDashboardPage from '@/components/admin/admin-dashboard-page';
-import { API_URL } from '@/lib/api';
+import { authApi } from '@/lib/api';
 
-export default async function AdminPage() {
-  const cookieStore = await cookies();
-  const cookieHeader = cookieStore.getAll().map((cookie) => `${cookie.name}=${cookie.value}`).join('; ');
-  let role: string | undefined;
+export default function AdminPage() {
+  const router = useRouter();
+  const [authorized, setAuthorized] = useState(false);
 
-  try {
-    const response = await fetch(`${API_URL}/auth/me`, {
-      headers: { Cookie: cookieHeader },
-      cache: 'no-store',
-    });
-    if (response.ok) {
-      const body = (await response.json()) as { data?: { user?: { role?: string } } };
-      role = body.data?.user?.role;
-    }
-  } catch {
-    // An unavailable API is handled as an unauthenticated session.
+  useEffect(() => {
+    let active = true;
+
+    const checkAdmin = async () => {
+      try {
+        const user = await authApi.me();
+        if (!active) return;
+
+        if (user.role !== 'admin') {
+          router.replace('/admin/login');
+          return;
+        }
+
+        setAuthorized(true);
+      } catch {
+        if (!active) return;
+        router.replace('/admin/login');
+      }
+    };
+
+    checkAdmin();
+
+    return () => {
+      active = false;
+    };
+  }, [router]);
+
+  if (!authorized) {
+    return null;
   }
-
-  if (role !== 'admin') redirect('/admin/login');
 
   return <AdminDashboardPage />;
 }
