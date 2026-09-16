@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Plus, Search, Pencil, Trash2, FileText, Calendar, Loader2 } from 'lucide-react';
+import { Plus, Search, Pencil, Trash2, FileText, Calendar } from 'lucide-react';
 import { AdminPageHeader } from '@/components/admin/admin-page-header';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -115,7 +115,7 @@ export default function AdminBlogPage() {
                         disabled={toggleActiveMutation.isPending}
                         onClick={() => toggleActiveMutation.mutate({ id: p._id, isActive: p.isActive === false })}
                       >
-                        {toggleActiveMutation.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : p.isActive !== false ? 'Active' : 'Inactive'}
+                        {p.isActive !== false ? 'Active' : 'Inactive'}
                       </Button>
                       {p.isFeatured && <Badge className="bg-brand-accent/10 text-brand-accent border border-brand-accent/20">Featured</Badge>}
                     </div>
@@ -138,11 +138,11 @@ export default function AdminBlogPage() {
           </table>
         </div>
 
-        {(isLoading || error || filtered.length === 0) && (
+        {(!isLoading && (error || filtered.length === 0)) && (
           <div className="flex flex-col items-center justify-center py-16 text-center">
             <FileText className="h-10 w-10 text-muted-foreground/40" />
-            <h3 className="mt-4 font-heading text-base font-semibold text-foreground">{isLoading ? 'Loading articles...' : error ? 'Unable to load articles' : 'No articles found'}</h3>
-            {!isLoading && <p className="mt-1 text-sm text-muted-foreground">{error instanceof Error ? error.message : 'Try adjusting your filters or write a new article.'}</p>}
+            <h3 className="mt-4 font-heading text-base font-semibold text-foreground">{error ? 'Unable to load articles' : 'No articles found'}</h3>
+            <p className="mt-1 text-sm text-muted-foreground">{error instanceof Error ? error.message : 'Try adjusting your filters or write a new article.'}</p>
           </div>
         )}
       </div>

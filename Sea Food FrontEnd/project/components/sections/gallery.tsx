@@ -10,13 +10,16 @@ import { Button } from '@/components/ui/button';
 import { galleryImages } from '@/lib/data/content';
 import { galleryApi, bannerApi } from '@/lib/api';
 import { ImageLightbox } from '@/components/gallery/image-lightbox';
+import { useInView } from '@/lib/hooks/use-in-view';
 
 export function Gallery() {
   const [lightboxIndex, setLightboxIndex] = useState<number>(-1);
-  const { data: managedImages } = useQuery({ queryKey: ['public-gallery'], queryFn: galleryApi.publicList });
+  const { ref, isInView } = useInView<HTMLElement>('300px');
+  const { data: managedImages } = useQuery({ queryKey: ['public-gallery'], queryFn: galleryApi.publicList, enabled: isInView, staleTime: 60_000 });
   const { data: savedBanners = [] } = useQuery({
     queryKey: ['public-banners'],
     queryFn: bannerApi.publicList,
+    enabled: isInView,
     staleTime: 60_000,
   });
 
@@ -36,7 +39,7 @@ export function Gallery() {
   const previewImages = images.slice(0, 8);
 
   return (
-    <section className="section-padding bg-muted/40">
+    <section ref={ref} className="section-padding bg-muted/40">
       <div className="container-wide">
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
           <SectionHeading

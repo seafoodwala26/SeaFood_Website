@@ -87,15 +87,12 @@ export function ImageLightbox({
       aria-label={currentImage.caption || currentImage.alt || 'Gallery Image Preview'}
       className="fixed inset-0 z-50 flex flex-col items-center justify-between bg-black/95 p-3 sm:p-6 backdrop-blur-md animate-in fade-in-0 duration-200"
       onClick={(e) => {
-        // Light-dismiss: click outside the image / controls closes
         if (e.target === e.currentTarget) {
           onClose();
         }
       }}
     >
-      {/* Top Controls Bar */}
       <div className="flex w-full items-center justify-between z-10 px-2 sm:px-4 py-2">
-        {/* Counter & Info */}
         <div className="flex items-center gap-3">
           <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold tracking-wide text-white backdrop-blur-sm border border-white/10">
             {currentIndex + 1} / {total}
@@ -107,7 +104,6 @@ export function ImageLightbox({
           )}
         </div>
 
-        {/* Action buttons */}
         <div className="flex items-center gap-2">
           {currentImage.src && (
             <Button
@@ -118,8 +114,7 @@ export function ImageLightbox({
               asChild
             >
               <a href={currentImage.src} target="_blank" rel="noopener noreferrer">
-                <ExternalLink className="h-4 w-4" />
-                <span className="sr-only">Open original image</span>
+                <ExternalLink className="h-4 w-4" /> <span className="sr-only">Open original image</span>
               </a>
             </Button>
           )}
@@ -132,26 +127,18 @@ export function ImageLightbox({
             title="Close (Esc)"
             aria-label="Close popup"
           >
-            <X className="h-5 w-5" />
-            <span className="sr-only">Close</span>
+            <X className="h-5 w-5" /> <span className="sr-only">Close</span>
           </Button>
         </div>
       </div>
 
-      {/* Main Image Stage */}
-      <div
-        className="relative flex flex-1 w-full max-w-6xl items-center justify-center my-auto overflow-hidden px-2 sm:px-12"
-        onClick={(e) => {
-          if (e.target === e.currentTarget) onClose();
-        }}
+      <div className="relative flex flex-1 w-full max-w-6xl items-center justify-center my-auto overflow-hidden px-2 sm:px-12"
+        onClick={(e) => {if (e.target === e.currentTarget) onClose();}}
       >
         {/* Prev Button */}
         <button
           type="button"
-          onClick={(e) => {
-            e.stopPropagation();
-            handlePrev();
-          }}
+          onClick={(e) => { e.stopPropagation(); handlePrev();}}
           className="absolute left-2 sm:left-4 z-20 flex h-11 w-11 items-center justify-center rounded-full bg-black/60 text-white border border-white/15 backdrop-blur-sm hover:bg-black/90 hover:scale-105 active:scale-95 transition-all shadow-lg focus:outline-none focus:ring-2 focus:ring-primary"
           aria-label="Previous image"
           title="Previous (Left Arrow)"

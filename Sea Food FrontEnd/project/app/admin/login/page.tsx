@@ -3,13 +3,11 @@
 import { useState, FormEvent } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useMutation } from '@tanstack/react-query';
-import Link from 'next/link';
 import { Waves, Mail, Lock, Eye, EyeOff, ArrowRight, Loader2, AlertCircle, ShieldCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ThemeProvider } from '@/components/admin/theme-provider';
-import { ThemeToggle } from '@/components/admin/theme-toggle';
 import { authApi } from '@/lib/api';
 
 export default function AdminLoginPage() {
@@ -47,16 +45,7 @@ export default function AdminLoginPage() {
         <div className="absolute -left-32 bottom-0 h-80 w-80 rounded-full bg-brand-accent/10 blur-3xl" aria-hidden="true" />
 
         <div className="relative w-full max-w-md">
-          {/* Theme toggle */}
-          <div className="absolute right-0 top-0">
-            <ThemeToggle />
-          </div>
-
-          {/* Logo */}
           <div className="mb-8 flex flex-col items-center text-center">
-            <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-brand-primary-deep text-primary-foreground shadow-premium">
-              <Waves className="h-7 w-7" />
-            </span>
             <h1 className="mt-5 font-heading text-2xl font-bold tracking-tight text-foreground">
               Admin Panel
             </h1>
@@ -101,9 +90,6 @@ export default function AdminLoginPage() {
                   <Label htmlFor="password" className="text-sm font-medium">
                     Password
                   </Label>
-                  <Link href="/admin/login" className="text-xs font-medium text-primary hover:underline">
-                    Forgot password?
-                  </Link>
                 </div>
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -135,7 +121,6 @@ export default function AdminLoginPage() {
                   onChange={(e) => setRemember(e.target.checked)}
                   className="h-4 w-4 rounded border-border text-primary focus:ring-primary"
                 />
-                Keep me signed in for 30 days
               </label>
 
               <Button type="submit" size="lg" className="w-full group" disabled={loginMutation.isPending}>
@@ -153,18 +138,8 @@ export default function AdminLoginPage() {
               </Button>
             </form>
 
-            <div className="mt-6 flex items-center gap-2 rounded-lg bg-muted/50 p-3 text-xs text-muted-foreground">
-              <ShieldCheck className="h-4 w-4 shrink-0 text-brand-accent" />
-              Protected area. All access attempts are logged and encrypted.
-            </div>
           </div>
 
-          <p className="mt-6 text-center text-xs text-muted-foreground">
-            Need access?{' '}
-            <Link href="/contact" className="font-medium text-primary hover:underline">
-              Contact your administrator
-            </Link>
-          </p>
         </div>
       </div>
     </ThemeProvider>

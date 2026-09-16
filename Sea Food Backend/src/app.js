@@ -29,12 +29,12 @@ app.use(cors({
   },
   credentials: true,
 }));
+
 app.use(compression());
 app.use(express.json({ limit: '10kb' }));
 app.use(express.urlencoded({ extended: true, limit: '10kb' }));
 app.use(cookieParser());
-// Express 5 exposes req.query as a read-only getter. Sanitize its object in place
-// instead of using the package middleware, which attempts to reassign that getter.
+
 app.use((req, res, next) => {
   mongoSanitize.sanitize(req.body);
   mongoSanitize.sanitize(req.params);

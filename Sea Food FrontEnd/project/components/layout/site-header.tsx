@@ -255,17 +255,12 @@ export function SiteHeader() {
           <div className="flex items-center gap-3">
             <a
               href={`tel:${phone.replace(/[^0-9+]/g, '')}`}
-              className={cn(
-                'hidden items-center gap-2 text-sm font-medium transition-colors xl:flex',
-                'text-foreground/70 hover:text-brand-primary',
-              )}
+              className={cn('hidden items-center gap-2 text-sm font-medium transition-colors xl:flex', 'text-foreground/70 hover:text-brand-primary',)}
             >
               <Phone className="h-4 w-4" />
               {phone}
             </a>
-            <Button asChild size="sm" className="hidden sm:inline-flex">
-              <Link prefetch={false} href="/inquiry">Get a Quote</Link>
-            </Button>
+            <Button asChild size="sm" className="hidden sm:inline-flex"><Link prefetch={false} href="/contact">Get a Quote</Link></Button>
 
             <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
               <SheetTrigger asChild>
@@ -284,17 +279,11 @@ export function SiteHeader() {
                             onClick={() => setMobileProductsOpen(!mobileProductsOpen)}
                             className={cn(
                               'flex w-full items-center justify-between rounded-lg px-4 py-3 text-base font-medium transition-colors',
-                              isActive(item.href)
-                                ? 'bg-brand-primary/10 text-brand-primary'
-                                : 'text-foreground/80 hover:bg-muted',
+                              isActive(item.href) ? 'bg-brand-primary/10 text-brand-primary' : 'text-foreground/80 hover:bg-muted',
                             )}
                           >
                             {item.title}
-                            <ChevronRight
-                              className={cn(
-                                'h-4 w-4 opacity-50 transition-transform',
-                                mobileProductsOpen && 'rotate-90',
-                              )}
+                            <ChevronRight className={cn('h-4 w-4 opacity-50 transition-transform', mobileProductsOpen && 'rotate-90',)}
                             />
                           </button>
                           {mobileProductsOpen && (
@@ -335,7 +324,7 @@ export function SiteHeader() {
                         href={item.href}
                         className={cn(
                           'flex items-center justify-between rounded-lg px-4 py-3 text-base font-medium transition-colors',
-                          isActive(item.href)
+                          isActive(item.href) 
                             ? 'bg-brand-primary/10 text-brand-primary'
                             : 'text-foreground/80 hover:bg-muted',
                         )}
@@ -348,7 +337,7 @@ export function SiteHeader() {
                 </nav>
                 <div className="mt-8 flex flex-col gap-3 border-t border-border pt-6">
                   <Button asChild className="w-full">
-                    <Link prefetch={false} href="/inquiry">Get a Quote</Link>
+                    <Link prefetch={false} href="/contact">Get a Quote</Link>
                   </Button>
                   <a
                     href={`tel:${phone.replace(/[^0-9+]/g, '')}`}

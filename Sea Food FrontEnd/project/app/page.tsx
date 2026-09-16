@@ -10,7 +10,6 @@ import { Testimonials } from '@/components/sections/testimonials';
 import { LatestBlogs } from '@/components/sections/latest-blogs';
 import { FAQ } from '@/components/sections/faq';
 import { CTAInquiry } from '@/components/sections/cta-inquiry';
-import { MapSection } from '@/components/sections/map-section';
 import { WebsiteSchema } from '@/lib/seo/schema';
 
 export default function Home() {
@@ -28,7 +27,6 @@ export default function Home() {
       <LatestBlogs />
       <FAQ />
       <CTAInquiry />
-      <MapSection />
     </PageShell>
   );
 }

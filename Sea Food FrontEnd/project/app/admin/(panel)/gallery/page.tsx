@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { ImagePlus, Loader2, Save, Upload, X } from 'lucide-react';
+import { ImagePlus, Save, Upload, X } from 'lucide-react';
 import { AdminPageHeader } from '@/components/admin/admin-page-header';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -71,7 +71,7 @@ export default function AdminGalleryPage() {
                 </div>
               ))}
               <Button type="button" onClick={() => uploadMutation.mutate()} disabled={uploadMutation.isPending || names.some((name) => !name.trim())}>
-                {uploadMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
+                <Upload className="mr-2 h-4 w-4" />
                 Upload {files.length} Image{files.length === 1 ? '' : 's'}
               </Button>
             </div>
@@ -85,7 +85,7 @@ export default function AdminGalleryPage() {
           <div><h2 className="font-heading text-lg font-semibold">Managed Images</h2><p className="text-sm text-muted-foreground">Inactive images stay in the admin panel but are hidden from the website.</p></div>
           <span className="text-sm text-muted-foreground">{images.length} images</span>
         </div>
-        {isLoading ? <p className="py-12 text-center text-sm text-muted-foreground">Loading gallery...</p> : images.length === 0 ? <div className="py-12 text-center text-sm text-muted-foreground">No gallery images yet.</div> : (
+        {!isLoading && images.length === 0 ? <div className="py-12 text-center text-sm text-muted-foreground">No gallery images yet.</div> : !isLoading && (
           <div className="mt-5 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {images.map((item: ApiGalleryImage) => <GalleryItem key={item._id} item={item} onUpdate={(payload) => updateMutation.mutate({ id: item._id, payload })} onDelete={() => window.confirm(`Delete ${item.name}?`) && deleteMutation.mutate(item._id)} disabled={updateMutation.isPending || deleteMutation.isPending} />)}
           </div>

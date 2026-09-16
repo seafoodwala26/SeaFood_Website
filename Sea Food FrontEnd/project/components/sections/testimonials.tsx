@@ -7,7 +7,7 @@ import { testimonials } from '@/lib/data/content';
 
 export function Testimonials() {
   return (
-    <section className="`bg-muted/40">
+    <section className="section-padding">
       <div className="container-wide">
         <SectionHeading
           eyebrow="Customer Stories"
