@@ -23,11 +23,14 @@ export function buildPageMetadata({
   keywords,
 }: PageMetadataInput): Metadata {
   const url = `${siteConfig.url}${path}`;
+
   return {
     title,
     description,
     alternates: { canonical: path },
-    ...(keywords ? { keywords } : {}),
+    ...(keywords && keywords.length > 0
+      ? { other: { keywords: keywords.join(', ') } }
+      : {}),
     openGraph: {
       type,
       url,
