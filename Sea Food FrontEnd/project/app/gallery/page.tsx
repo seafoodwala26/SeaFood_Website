@@ -12,15 +12,7 @@ export const metadata: Metadata = buildPageMetadata({
   title: 'Fresh Seafood & Facility Gallery | Seafood Wala',
   description:
     'Explore Seafood Wala\'s official gallery featuring daily catches, cold storage facilities, hygienic processing, and international export packing of fresh fish, prawns, and crabs.',
-  path: '/gallery',
-  keywords: [
-    'seafood gallery',
-    'fresh fish photos',
-    'cold storage facility',
-    'seafood export packaging',
-    'prawns processing',
-    'Seafood Wala images',
-  ],
+  path: '/gallery'
 });
 
 export default async function GalleryPage() {
