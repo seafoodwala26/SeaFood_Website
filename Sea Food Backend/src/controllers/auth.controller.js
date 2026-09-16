@@ -38,8 +38,8 @@ async function login(req, res) {
   const isProduction = process.env.NODE_ENV === 'production';
   res.cookie('admin_token', token, {
     httpOnly: true,
-    secure: isProduction,
-    sameSite: isProduction ? 'none' : 'lax',
+    secure: true,
+    sameSite: 'none',
     maxAge: 12 * 60 * 60 * 1000,
     path: '/',
   });
@@ -48,11 +48,10 @@ async function login(req, res) {
 }
 
 function logout(req, res) {
-  const isProduction = process.env.NODE_ENV === 'production';
   res.clearCookie('admin_token', {
     httpOnly: true,
-    secure: isProduction,
-    sameSite: isProduction ? 'none' : 'lax',
+    secure: true,
+    sameSite: 'none',
     path: '/',
   });
   res.status(204).send();
