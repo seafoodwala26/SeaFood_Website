@@ -1,16 +1,9 @@
 import axios from 'axios';
 
-// Absolute backend URL. Used for server-side requests (e.g. the admin session
-// check in app/admin/page.tsx), which cannot use a relative URL.
 export const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
-// Browser requests go through this app's own /api proxy (see next.config.js
-// rewrites). This keeps the backend auth cookie first-party so it is stored on
-// this app's domain and can be read by the server-side admin session check.
-export const BROWSER_API_URL = '/api';
-
 export const api = axios.create({
-  baseURL: BROWSER_API_URL,
+  baseURL: API_URL,
   withCredentials: true,
   headers: { Accept: 'application/json' },
 });

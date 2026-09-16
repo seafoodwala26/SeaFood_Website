@@ -9,6 +9,7 @@ interface PageMetadataInput {
   type?: 'website' | 'article';
   publishedTime?: string;
   noIndex?: boolean;
+  keywords?: string[];
 }
 
 export function buildPageMetadata({
@@ -19,12 +20,14 @@ export function buildPageMetadata({
   type = 'website',
   publishedTime,
   noIndex = false,
+  keywords,
 }: PageMetadataInput): Metadata {
   const url = `${siteConfig.url}${path}`;
   return {
     title,
     description,
     alternates: { canonical: path },
+    ...(keywords ? { keywords } : {}),
     openGraph: {
       type,
       url,
