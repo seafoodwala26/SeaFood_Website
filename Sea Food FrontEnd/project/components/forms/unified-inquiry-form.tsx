@@ -63,14 +63,19 @@ export function UnifiedInquiryForm({
   const [values, setValues] = useState<FormState>(initialState);
   const [errors, setErrors] = useState<FormErrors>({});
   const [status, setStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle');
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const inquiryMutation = useMutation({
     mutationFn: inquiryApi.create,
     onSuccess: () => {
       setValues({ ...initialState });
       setErrors({});
+      setSubmitError(null);
       setStatus('success');
     },
-    onError: () => setStatus('error'),
+    onError: (error: Error) => {
+      setSubmitError(error.message);
+      setStatus('error');
+    },
   });
 
   useEffect(() => {
@@ -107,6 +112,7 @@ export function UnifiedInquiryForm({
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (!validate()) return;
+    setSubmitError(null);
     setStatus('submitting');
     inquiryMutation.mutate({ ...values });
   };
@@ -133,7 +139,7 @@ export function UnifiedInquiryForm({
       {status === 'error' && (
         <div className="flex items-center gap-3 rounded-xl border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive">
           <AlertCircle className="h-5 w-5 shrink-0" />
-          Something went wrong. Please try again or email us directly.
+          {submitError || 'Something went wrong. Please try again or email us directly.'}
         </div>
       )}
 

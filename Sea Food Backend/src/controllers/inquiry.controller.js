@@ -18,11 +18,11 @@ function getMailer() {
     throw error;
   }
 
-  const port = Number(SMTP_PORT || 465);
+  const port = Number(SMTP_PORT || 587);
   return nodemailer.createTransport({
     host: SMTP_HOST,
     port,
-    secure: SMTP_SECURE ? SMTP_SECURE === 'true' : port === 465,
+    secure: port === 465 ? SMTP_SECURE === 'true' : false,
     family: 4,
     connectionTimeout: 10000,
     greetingTimeout: 10000,
@@ -35,13 +35,10 @@ async function createInquiry(req, res) {
   const inquiry = req.body;
   const savedInquiry = await Inquiry.create(inquiry);
 
-  // Do not make the form wait for SMTP. The inquiry is already persisted, so
-  // email delivery can continue after the client receives a success response.
-  res.status(201).json({ status: 'success', data: savedInquiry, message: 'Your inquiry has been sent successfully.' });
-
   try {
     const transporter = getMailer();
     const adminEmail = process.env.CONTACT_RECIPIENT || process.env.SMTP_USER;
+    const customerEmail = inquiry.email.trim();
     const replyTo = `${inquiry.fullName} <${inquiry.email}>`;
     const fields = [
       ['Name', inquiry.fullName], ['Company', inquiry.company || '-'], ['Email', inquiry.email],
@@ -54,26 +51,38 @@ async function createInquiry(req, res) {
     const text = fields.map(([label, value]) => `${label}: ${value}`).join('\n');
     const from = process.env.SMTP_FROM || `Seafood Wala Website <${process.env.SMTP_USER}>`;
 
-    await Promise.all([
-      transporter.sendMail({
-        from,
-        to: adminEmail,
-        replyTo,
-        subject: `New website inquiry from ${inquiry.fullName}`,
-        text,
-        html: `<h2>New website inquiry</h2><table cellpadding="0" cellspacing="0" style="border-collapse:collapse">${htmlRows}</table>`,
-      }),
-      transporter.sendMail({
-        from,
-        to: inquiry.email,
-        replyTo: adminEmail,
-        subject: 'We received your inquiry - Seafood Wala',
-        text: `Hello ${inquiry.fullName},\n\nThank you for contacting Seafood Wala. We received your inquiry and our team will respond shortly.\n\nInquiry details:\n${text}`,
-        html: `<p>Hello ${escapeHtml(inquiry.fullName)},</p><p>Thank you for contacting Seafood Wala. We received your inquiry and our team will respond shortly.</p><h3>Inquiry details</h3><table cellpadding="0" cellspacing="0" style="border-collapse:collapse">${htmlRows}</table>`,
-      }),
-    ]);
+    // Customer confirmation must succeed before the frontend shows success.
+    const customerDelivery = await transporter.sendMail({
+      from,
+      to: customerEmail,
+      envelope: { from: process.env.SMTP_USER, to: customerEmail },
+      replyTo: adminEmail,
+      subject: 'We received your inquiry - Seafood Wala',
+      text: `Hello ${inquiry.fullName},\n\nThank you for contacting Seafood Wala. We received your inquiry and our team will respond shortly.\n\nInquiry details:\n${text}`,
+      html: `<p>Hello ${escapeHtml(inquiry.fullName)},</p><p>Thank you for contacting Seafood Wala. We received your inquiry and our team will respond shortly.</p><h3>Inquiry details</h3><table cellpadding="0" cellspacing="0" style="border-collapse:collapse">${htmlRows}</table>`,
+    });
+    console.log('Customer inquiry email accepted:', customerDelivery.accepted);
+
+    res.status(201).json({ status: 'success', data: savedInquiry, message: 'Your inquiry has been sent successfully.' });
+
+    // Admin notification should not delay the customer's confirmation.
+    transporter.sendMail({
+      from,
+      to: adminEmail,
+      envelope: { from: process.env.SMTP_USER, to: adminEmail },
+      replyTo,
+      subject: `New website inquiry from ${inquiry.fullName}`,
+      text,
+      html: `<h2>New website inquiry</h2><table cellpadding="0" cellspacing="0" style="border-collapse:collapse">${htmlRows}</table>`,
+    }).catch((error) => console.error('Admin inquiry email delivery failed:', error));
   } catch (error) {
     console.error('Inquiry email delivery failed:', error);
+    if (!res.headersSent) {
+      res.status(503).json({
+        status: 'fail',
+        message: 'Inquiry saved, but the confirmation email could not be sent. Please try again later.',
+      });
+    }
   }
 }
 
