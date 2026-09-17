@@ -2,18 +2,13 @@
 
 import { useState, useEffect, FormEvent } from 'react';
 import { useSearchParams } from 'next/navigation';
+import { useMutation } from '@tanstack/react-query';
 import { CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import {Select,SelectContent,SelectItem,SelectTrigger,SelectValue} from '@/components/ui/select';
 import { countries } from '@/lib/data/content';
 import { usePublicProducts } from '@/lib/hooks/use-catalog';
 import { inquiryApi } from '@/lib/api';
@@ -68,6 +63,15 @@ export function UnifiedInquiryForm({
   const [values, setValues] = useState<FormState>(initialState);
   const [errors, setErrors] = useState<FormErrors>({});
   const [status, setStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle');
+  const inquiryMutation = useMutation({
+    mutationFn: inquiryApi.create,
+    onSuccess: () => {
+      setValues({ ...initialState });
+      setErrors({});
+      setStatus('success');
+    },
+    onError: () => setStatus('error'),
+  });
 
   useEffect(() => {
     const product = searchParams.get('product');
@@ -104,13 +108,7 @@ export function UnifiedInquiryForm({
     e.preventDefault();
     if (!validate()) return;
     setStatus('submitting');
-    try {
-      await inquiryApi.create(values);
-      setStatus('success');
-      setValues(initialState);
-    } catch {
-      setStatus('error');
-    }
+    inquiryMutation.mutate({ ...values });
   };
 
   if (status === 'success') {
@@ -239,9 +237,9 @@ export function UnifiedInquiryForm({
         type="submit"
         size="lg"
         className="w-full sm:w-auto"
-        disabled={status === 'submitting'}
+        disabled={inquiryMutation.isPending}
       >
-        {status === 'submitting' ? (
+        {inquiryMutation.isPending ? (
           <>
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             Submitting...

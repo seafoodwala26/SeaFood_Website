@@ -23,6 +23,10 @@ function getMailer() {
     host: SMTP_HOST,
     port,
     secure: SMTP_SECURE ? SMTP_SECURE === 'true' : port === 465,
+    family: 4,
+    connectionTimeout: 10000,
+    greetingTimeout: 10000,
+    socketTimeout: 15000,
     auth: { user: SMTP_USER, pass: SMTP_PASSWORD },
   });
 }
@@ -30,40 +34,47 @@ function getMailer() {
 async function createInquiry(req, res) {
   const inquiry = req.body;
   const savedInquiry = await Inquiry.create(inquiry);
-  const transporter = getMailer();
-  const adminEmail = process.env.CONTACT_RECIPIENT || process.env.SMTP_USER;
-  const replyTo = `${inquiry.fullName} <${inquiry.email}>`;
-  const fields = [
-    ['Name', inquiry.fullName], ['Company', inquiry.company || '—'], ['Email', inquiry.email],
-    ['Phone', inquiry.phone], ['Country', inquiry.country], ['Product', inquiry.product],
-    ['Quantity', inquiry.quantity], ['Message', inquiry.message],
-  ];
-  const htmlRows = fields.map(([label, value]) =>
-    `<tr><td style="padding:8px 12px;font-weight:600;vertical-align:top">${escapeHtml(label)}</td><td style="padding:8px 12px;white-space:pre-wrap">${escapeHtml(value)}</td></tr>`
-  ).join('');
-  const text = fields.map(([label, value]) => `${label}: ${value}`).join('\n');
 
-  const from = process.env.SMTP_FROM || `Seafood Wala Website <${process.env.SMTP_USER}>`;
-  await Promise.all([
-    transporter.sendMail({
-      from,
-      to: adminEmail,
-      replyTo,
-      subject: `New website inquiry from ${inquiry.fullName}`,
-      text,
-      html: `<h2>New website inquiry</h2><table cellpadding="0" cellspacing="0" style="border-collapse:collapse">${htmlRows}</table>`,
-    }),
-    transporter.sendMail({
-      from,
-      to: inquiry.email,
-      replyTo: adminEmail,
-      subject: 'We received your inquiry - Seafood Wala',
-      text: `Hello ${inquiry.fullName},\n\nThank you for contacting Seafood Wala. We received your inquiry and our team will respond shortly.\n\nInquiry details:\n${text}`,
-      html: `<p>Hello ${escapeHtml(inquiry.fullName)},</p><p>Thank you for contacting Seafood Wala. We received your inquiry and our team will respond shortly.</p><h3>Inquiry details</h3><table cellpadding="0" cellspacing="0" style="border-collapse:collapse">${htmlRows}</table>`,
-    }),
-  ]);
-
+  // Do not make the form wait for SMTP. The inquiry is already persisted, so
+  // email delivery can continue after the client receives a success response.
   res.status(201).json({ status: 'success', data: savedInquiry, message: 'Your inquiry has been sent successfully.' });
+
+  try {
+    const transporter = getMailer();
+    const adminEmail = process.env.CONTACT_RECIPIENT || process.env.SMTP_USER;
+    const replyTo = `${inquiry.fullName} <${inquiry.email}>`;
+    const fields = [
+      ['Name', inquiry.fullName], ['Company', inquiry.company || '-'], ['Email', inquiry.email],
+      ['Phone', inquiry.phone], ['Country', inquiry.country], ['Product', inquiry.product],
+      ['Quantity', inquiry.quantity], ['Message', inquiry.message],
+    ];
+    const htmlRows = fields.map(([label, value]) =>
+      `<tr><td style="padding:8px 12px;font-weight:600;vertical-align:top">${escapeHtml(label)}</td><td style="padding:8px 12px;white-space:pre-wrap">${escapeHtml(value)}</td></tr>`
+    ).join('');
+    const text = fields.map(([label, value]) => `${label}: ${value}`).join('\n');
+    const from = process.env.SMTP_FROM || `Seafood Wala Website <${process.env.SMTP_USER}>`;
+
+    await Promise.all([
+      transporter.sendMail({
+        from,
+        to: adminEmail,
+        replyTo,
+        subject: `New website inquiry from ${inquiry.fullName}`,
+        text,
+        html: `<h2>New website inquiry</h2><table cellpadding="0" cellspacing="0" style="border-collapse:collapse">${htmlRows}</table>`,
+      }),
+      transporter.sendMail({
+        from,
+        to: inquiry.email,
+        replyTo: adminEmail,
+        subject: 'We received your inquiry - Seafood Wala',
+        text: `Hello ${inquiry.fullName},\n\nThank you for contacting Seafood Wala. We received your inquiry and our team will respond shortly.\n\nInquiry details:\n${text}`,
+        html: `<p>Hello ${escapeHtml(inquiry.fullName)},</p><p>Thank you for contacting Seafood Wala. We received your inquiry and our team will respond shortly.</p><h3>Inquiry details</h3><table cellpadding="0" cellspacing="0" style="border-collapse:collapse">${htmlRows}</table>`,
+      }),
+    ]);
+  } catch (error) {
+    console.error('Inquiry email delivery failed:', error);
+  }
 }
 
 async function listInquiries(req, res) {
