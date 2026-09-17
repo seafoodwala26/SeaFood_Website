@@ -18,16 +18,19 @@ export function GalleryMasonry({ initialData }: GalleryMasonryProps) {
   const [lightboxIndex, setLightboxIndex] = useState<number>(-1);
 
   // Fetch managed images from backend API with SSR hydration support
-  const { data: apiImages, isLoading } = useQuery({
+  const { data: rawImages, isLoading } = useQuery({
     queryKey: ['public-gallery'],
     queryFn: galleryApi.publicList,
     initialData,
     staleTime: 60 * 1000,
   });
 
+  // Normalise to a guaranteed array so downstream code never handles undefined.
+  const apiImages: ApiGalleryImage[] = rawImages ?? [];
+
   // Prepare images array: managed images from DB or fallback content images
   const allImages: LightboxImage[] = useMemo(() => {
-    if (apiImages && apiImages.length > 0) {
+    if (apiImages.length > 0) {
       return apiImages.map((item) => ({
         src: item.image.url,
         alt: item.name || 'Seafood Wala Gallery Image',
@@ -66,7 +69,7 @@ export function GalleryMasonry({ initialData }: GalleryMasonryProps) {
       </div>
 
       {/* Loading Skeleton */}
-      {isLoading && (!apiImages || apiImages.length === 0) ? (
+      {isLoading && apiImages.length === 0 ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5 sm:gap-6">
           {Array.from({ length: 8 }).map((_, i) => (
             <div key={i} className="aspect-square w-full overflow-hidden rounded-2xl sm:rounded-3xl">

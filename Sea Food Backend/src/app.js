@@ -17,14 +17,25 @@ const inquiryRoutes = require('./routes/inquiry.routes');
 const galleryRoutes = require('./routes/gallery.routes');
 
 const app = express();
-const allowedOrigins = (process.env.CLIENT_URL || 'http://localhost:3000')
-  .split(',')
-  .map((origin) => origin.trim());
+const defaultAllowedOrigins = [
+  'http://localhost:3000',
+  'https://polite-souffle-8eb98a.netlify.app',
+];
+const allowedOrigins = [...new Set([
+  ...defaultAllowedOrigins,
+  ...(process.env.CLIENT_URL || '').split(',').map((origin) => origin.trim()).filter(Boolean),
+])];
 
 app.use(helmet());
 app.use(cors({
   origin(origin, callback) {
-    if (!origin || allowedOrigins.includes(origin)) return callback(null, true);
+    if (!origin) return callback(null, true);
+
+    if (allowedOrigins.includes(origin)) return callback(null, true);
+
+    const isNetlifyPreview = /^https:\/\/.*\.netlify\.app$/.test(origin);
+    if (isNetlifyPreview) return callback(null, true);
+
     return callback(new Error('Origin is not allowed by CORS'));
   },
   credentials: true,

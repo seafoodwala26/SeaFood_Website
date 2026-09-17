@@ -7,9 +7,8 @@ const configuredApiUrl = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5
   .replace(/\/api$/, '');
 export const API_URL = `${configuredApiUrl}/api`;
 
-// Browser requests go through this app's own /api proxy (see next.config.js
-// rewrites). This keeps the backend auth cookie first-party so it is stored on
-// this app's domain and can be read by the server-side admin session check.
+// Browser requests use the Next.js proxy so the backend auth cookie remains
+// available to the server-side admin session check.
 export const BROWSER_API_URL = '/api';
 
 export const api = axios.create({

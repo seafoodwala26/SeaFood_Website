@@ -13,10 +13,10 @@ const defaultStats = [
 export function Stats() {
   const { data: configuration } = usePublicSiteConfiguration();
   const stats = [
-    { ...defaultStats[0], value: configuration?.yearsOfExperience ?? defaultStats[0].value },
-    { ...defaultStats[1], value: configuration?.countriesServed ?? defaultStats[1].value },
-    { ...defaultStats[2], value: configuration?.happyClients ?? defaultStats[2].value },
-    { ...defaultStats[3], value: configuration?.productsExported ?? defaultStats[3].value },
+    { ...defaultStats[0], value: String(configuration?.yearsOfExperience ?? defaultStats[0].value) },
+    { ...defaultStats[1], value: String(configuration?.countriesServed ?? defaultStats[1].value) },
+    { ...defaultStats[2], value: String(configuration?.happyClients ?? defaultStats[2].value) },
+    { ...defaultStats[3], value: String(configuration?.productsExported ?? defaultStats[3].value) },
   ];
 
   return (
