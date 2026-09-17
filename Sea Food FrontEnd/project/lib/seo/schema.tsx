@@ -1,4 +1,3 @@
-import Script from 'next/script';
 import { siteConfig } from '@/lib/constants/site';
 
 interface JsonLdProps {
@@ -7,7 +6,7 @@ interface JsonLdProps {
 
 export function JsonLd({ data }: JsonLdProps) {
   return (
-    <Script
+    <script
       id={`json-ld-${String(data['@type'] || 'schema').toLowerCase()}`}
       type="application/ld+json"
       dangerouslySetInnerHTML={{ __html: JSON.stringify(data) }}
