@@ -16,7 +16,7 @@ export function AdminSidebar() {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
   const { data: inquiries = [] } = useQuery({
-    queryKey: ['admin-sidebar-inquiries'],
+    queryKey: ['inquiries'],
     queryFn: inquiryApi.list,
     refetchInterval: 30_000,
     refetchOnWindowFocus: true,

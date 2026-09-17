@@ -52,7 +52,7 @@ export default function AdminDashboardPage() {
     queryFn: () => blogApi.publicList({ page: 1, limit: 1 }),
   });
   const inquiriesQuery = useQuery({
-    queryKey: ['admin-dashboard-inquiries-count'],
+    queryKey: ['inquiries'],
     queryFn: inquiryApi.list,
   });
 

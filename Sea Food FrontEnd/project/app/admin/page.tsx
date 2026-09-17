@@ -1,44 +1,25 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useQuery } from '@tanstack/react-query';
 import AdminDashboardPage from '@/components/admin/admin-dashboard-page';
 import { authApi } from '@/lib/api';
 
 export default function AdminPage() {
   const router = useRouter();
-  const [authorized, setAuthorized] = useState(false);
+  const { data: user, isPending, isError } = useQuery({
+    queryKey: ['auth', 'me'],
+    queryFn: authApi.me,
+    retry: false,
+    staleTime: 5 * 60 * 1000,
+  });
 
   useEffect(() => {
-    let active = true;
+    if (isError || (user && user.role !== 'admin')) router.replace('/admin/login');
+  }, [isError, router, user]);
 
-    const checkAdmin = async () => {
-      try {
-        const user = await authApi.me();
-        if (!active) return;
-
-        if (user.role !== 'admin') {
-          router.replace('/admin/login');
-          return;
-        }
-
-        setAuthorized(true);
-      } catch {
-        if (!active) return;
-        router.replace('/admin/login');
-      }
-    };
-
-    checkAdmin();
-
-    return () => {
-      active = false;
-    };
-  }, [router]);
-
-  if (!authorized) {
-    return null;
-  }
+  if (isPending || !user || user.role !== 'admin') return null;
 
   return <AdminDashboardPage />;
 }

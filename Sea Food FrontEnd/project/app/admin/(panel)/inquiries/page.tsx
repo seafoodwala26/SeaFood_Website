@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Search, Eye, Trash2, ClipboardList, Mail, Phone, Calendar, Send, Loader2 } from 'lucide-react';
 import { AdminPageHeader } from '@/components/admin/admin-page-header';
 import { Button } from '@/components/ui/button';
@@ -35,16 +36,34 @@ const statusConfig: Record<InquiryRecord['status'], { label: string; variant: 'd
 export default function AdminInquiriesPage() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
-  const [inquiries, setInquiries] = useState<InquiryRecord[]>([]);
   const [selectedInquiry, setSelectedInquiry] = useState<InquiryRecord | null>(null);
   const [replySubject, setReplySubject] = useState('');
   const [replyMessage, setReplyMessage] = useState('');
-  const [replying, setReplying] = useState(false);
   const [replyFeedback, setReplyFeedback] = useState<string | null>(null);
+  const queryClient = useQueryClient();
+  const { data: inquiries = [], isLoading, error: loadError } = useQuery({
+    queryKey: ['inquiries'],
+    queryFn: inquiryApi.list,
+  });
 
-  useEffect(() => {
-    inquiryApi.list().then(setInquiries).catch(() => setInquiries([]));
-  }, []);
+  const deleteMutation = useMutation({
+    mutationFn: inquiryApi.remove,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['inquiries'] }),
+  });
+
+  const replyMutation = useMutation({
+    mutationFn: ({ id, subject, message }: { id: string; subject: string; message: string }) =>
+      inquiryApi.reply(id, { subject, message }),
+    onSuccess: (updatedInquiry) => {
+      queryClient.setQueryData<InquiryRecord[]>(['inquiries'], (current = []) =>
+        current.map((inquiry) => inquiry.id === updatedInquiry.id ? updatedInquiry : inquiry)
+      );
+      setSelectedInquiry(updatedInquiry);
+      setReplyFeedback('Reply sent successfully.');
+      setReplyMessage('');
+    },
+    onError: (error: Error) => setReplyFeedback(error.message),
+  });
 
   const filtered = inquiries.filter((inq) => {
     const matchSearch =
@@ -55,9 +74,7 @@ export default function AdminInquiriesPage() {
     return matchSearch && matchStatus;
   });
 
-  const handleDelete = (id: string) => {
-    setInquiries((prev) => prev.filter((i) => i.id !== id));
-  };
+  const handleDelete = (id: string) => deleteMutation.mutate(id);
 
   const openInquiry = (inquiry: InquiryRecord) => {
     setSelectedInquiry(inquiry);
@@ -70,22 +87,8 @@ export default function AdminInquiriesPage() {
     event.preventDefault();
     if (!selectedInquiry) return;
 
-    setReplying(true);
     setReplyFeedback(null);
-    try {
-      const updatedInquiry = await inquiryApi.reply(selectedInquiry.id, {
-        subject: replySubject,
-        message: replyMessage,
-      });
-      setInquiries((prev) => prev.map((inquiry) => inquiry.id === updatedInquiry.id ? updatedInquiry : inquiry));
-      setSelectedInquiry(updatedInquiry);
-      setReplyFeedback('Reply sent successfully.');
-      setReplyMessage('');
-    } catch (error) {
-      setReplyFeedback(error instanceof Error ? error.message : 'Unable to send reply.');
-    } finally {
-      setReplying(false);
-    }
+    replyMutation.mutate({ id: selectedInquiry.id, subject: replySubject, message: replyMessage });
   };
 
   return (
@@ -112,6 +115,7 @@ export default function AdminInquiriesPage() {
       </div>
 
       <div className="rounded-xl border border-border bg-card shadow-soft">
+        {loadError && <p className="border-b border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive">Unable to load inquiries.</p>}
         <div className="flex flex-col gap-3 border-b border-border p-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="relative max-w-xs flex-1">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -143,7 +147,9 @@ export default function AdminInquiriesPage() {
               </tr>
             </thead>
             <tbody>
-              {filtered.map((inq) => (
+              {isLoading ? (
+                <tr><td colSpan={6} className="px-5 py-12 text-center text-sm text-muted-foreground">Loading inquiries...</td></tr>
+              ) : filtered.map((inq) => (
                 <tr key={inq.id} className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors">
                   <td className="px-5 py-3.5">
                     <div>
@@ -173,7 +179,7 @@ export default function AdminInquiriesPage() {
                           <Eye className="h-3.5 w-3.5" />
                         </button>
                       </Button>
-                      <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => handleDelete(inq.id)}>
+                      <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => handleDelete(inq.id)} disabled={deleteMutation.isPending}>
                         <Trash2 className="h-3.5 w-3.5" />
                       </Button>
                     </div>
@@ -237,9 +243,9 @@ export default function AdminInquiriesPage() {
                 </div>
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   {replyFeedback && <p className={`text-sm ${replyFeedback.includes('successfully') ? 'text-brand-accent' : 'text-destructive'}`}>{replyFeedback}</p>}
-                  <Button type="submit" disabled={replying} className="sm:ml-auto">
-                    {replying ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
-                    {replying ? 'Sending...' : 'Send Reply'}
+                  <Button type="submit" disabled={replyMutation.isPending} className="sm:ml-auto">
+                    {replyMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
+                    {replyMutation.isPending ? 'Sending...' : 'Send Reply'}
                   </Button>
                 </div>
               </form>

@@ -2,6 +2,7 @@
 
 import { Bell, ChevronDown, LogOut } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { useMutation } from '@tanstack/react-query';
 import {DropdownMenu,DropdownMenuContent,DropdownMenuItem,DropdownMenuTrigger} from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -10,10 +11,15 @@ import { authApi } from '@/lib/api';
 
 export function AdminHeader() {
   const router = useRouter();
-  const handleLogout = async () => {
-    await authApi.logout();
-    router.push('/admin/login');
-    router.refresh();
+  const logoutMutation = useMutation({
+    mutationFn: authApi.logout,
+    onSuccess: () => {
+      router.push('/admin/login');
+      router.refresh();
+    },
+  });
+  const handleLogout = () => {
+    logoutMutation.mutate();
   };
 
   return (
@@ -41,7 +47,7 @@ export function AdminHeader() {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-40">
-            <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:text-destructive">
+            <DropdownMenuItem onClick={handleLogout} disabled={logoutMutation.isPending} className="text-destructive focus:text-destructive">
               <LogOut className="mr-2 h-4 w-4" />
               Log out
             </DropdownMenuItem>

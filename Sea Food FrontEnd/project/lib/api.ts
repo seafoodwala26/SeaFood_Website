@@ -259,6 +259,7 @@ export const inquiryApi = {
     const response = await api.get<{ data: (Omit<ApiInquiry, 'id'> & { _id: string })[] }>('/inquiries');
     return response.data.data.map(({ _id, ...inquiry }) => ({ ...inquiry, id: _id }));
   },
+  remove: (id: string) => api.delete(`/inquiries/${id}`),
 };
 
 export const blogApi = {

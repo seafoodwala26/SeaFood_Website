@@ -96,4 +96,13 @@ async function replyToInquiry(req, res) {
   return res.json({ status: 'success', data: inquiry, message: 'Reply sent successfully.' });
 }
 
-module.exports = { createInquiry, listInquiries, replyToInquiry };
+async function deleteInquiry(req, res) {
+  const inquiry = await Inquiry.findByIdAndDelete(req.params.id);
+  if (!inquiry) {
+    return res.status(404).json({ status: 'fail', message: 'Inquiry not found.' });
+  }
+
+  return res.status(204).send();
+}
+
+module.exports = { createInquiry, listInquiries, replyToInquiry, deleteInquiry };
