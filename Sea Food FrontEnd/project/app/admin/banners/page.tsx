@@ -15,7 +15,7 @@ import { bannerApi, type ApiBanner, type BannerPayload } from '@/lib/api';
 
 const pages = [
   { slug: 'about', name: 'About' }, { slug: 'products', name: 'Products' },
-  { slug: 'blog', name: 'Blog' }, { slug: 'contact', name: 'Contact' }, { slug: 'gallery', name: 'Gallery' },
+  { slug: 'blog', name: 'Blog' }, { slug: 'contact', name: 'Contact' },
 ] as const;
 type PageSlug = (typeof pages)[number]['slug'];
 interface FormState extends BannerPayload { imageName: string; }
@@ -43,9 +43,9 @@ export default function AdminBannersPage() {
     setError(null); saveMutation.mutate(form);
   };
   return <div className="space-y-6">
-    <AdminPageHeader title="Edit Page Banners" description="Manage the About, Products, Blog, Contact, and Gallery page hero banners." />
+    <AdminPageHeader title="Edit Page Banners" description="Manage the About, Products, Blog, and Contact page hero banners." />
     {isLoading ? <p className="text-sm text-muted-foreground">Loading banners...</p> : <form onSubmit={submit} className="overflow-hidden rounded-xl border border-border bg-card shadow-soft">
-      <div className="grid grid-cols-2 border-b border-border sm:grid-cols-5">{pages.map((page) => <button key={page.slug} type="button" onClick={() => setActivePage(page.slug)} className={`px-3 py-4 text-sm font-medium transition-colors ${activePage === page.slug ? 'border-b-2 border-primary bg-primary/5 text-primary' : 'text-muted-foreground hover:bg-muted/50'}`}>{page.name}</button>)}</div>
+      <div className="grid grid-cols-2 border-b border-border sm:grid-cols-4">{pages.map((page) => <button key={page.slug} type="button" onClick={() => setActivePage(page.slug)} className={`px-3 py-4 text-sm font-medium transition-colors ${activePage === page.slug ? 'border-b-2 border-primary bg-primary/5 text-primary' : 'text-muted-foreground hover:bg-muted/50'}`}>{page.name}</button>)}</div>
       <div className="grid gap-6 p-4 lg:grid-cols-2 lg:p-6">
         <div className="space-y-5">
           <AdminFormField label="Background Image" htmlFor="banner-image" required hint="Recommended: 1600px wide image"><ImageUpload value={form.image} fileName={form.imageName} onChange={(image, imageName) => setForm((state) => ({ ...state, image, imageName: imageName || '' }))} id="banner-image" aspectRatio="16/9" /></AdminFormField>

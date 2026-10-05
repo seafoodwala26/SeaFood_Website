@@ -23,11 +23,11 @@ const siteUrl = 'https://seafoodwala.in';
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: 'Seafood Wala | Premium Seafood Supplier & Distributor',
-    template: '%s | Seafood Wala',
+    default: 'Fresh Seafood Supplier | Fish, Prawns & Seafood | Seafood Wala',
+    template: '',
   },
   description:
-    'Seafood Wala supplies premium fresh fish, shrimp, lobster, oysters, and shellfish to customers worldwide. Sustainably sourced, cold chain delivered, freshness guaranteed.',
+    'Looking for fresh seafood? Seafood Wala offers quality fish, prawns, and seafood for homes, restaurants, hotels and businesses. Contact us for availability and orders.',
   authors: [{ name: 'Seafood Wala' }],
   creator: 'Seafood Wala',
   publisher: 'Seafood Wala',

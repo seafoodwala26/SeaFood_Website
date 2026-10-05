@@ -57,16 +57,6 @@ export const pageBanners: PageBanner[] = [
     visible: true,
   },
   {
-    pageSlug: 'gallery',
-    pageName: 'Gallery',
-    title: 'Seafood Wala Gallery',
-    description: 'A look at our seafood, facilities, and the people behind every delivery.',
-    backgroundImage: seafoodBanner,
-    overlayOpacity: 0.7,
-    breadcrumbLabel: 'Gallery',
-    visible: true,
-  },
-  {
     pageSlug: 'inquiry',
     pageName: 'Online Inquiry',
     title: 'Online Inquiry',

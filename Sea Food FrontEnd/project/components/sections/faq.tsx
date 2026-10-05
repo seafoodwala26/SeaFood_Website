@@ -3,8 +3,9 @@ import Image from 'next/image';
 import { SectionHeading } from '@/components/layout/section-heading';
 import { FAQSchema } from '@/lib/seo/schema';
 import { faqs } from '@/lib/data/content';
+import type { FAQItem } from '@/lib/types';
 
-export function FAQ() {
+export function FAQ({ items = faqs }: { items?: FAQItem[] }) {
   return (
     <section id="faq" className="section-padding">
       <div className="container-wide">
@@ -14,7 +15,7 @@ export function FAQ() {
               <SectionHeading
                 eyebrow="FAQ"
                 title="Frequently Asked Questions"
-                description="Everything you need to know about ordering, shipping, warranties, and OEM partnerships."
+                description=""
                 align="left"
               />
               <p className="mt-6 text-sm text-muted-foreground">
@@ -40,9 +41,9 @@ export function FAQ() {
             </div>
           </div>
           <div className="lg:col-span-7">
-            <FAQSchema items={faqs} />
-            <Accordion type="single" collapsible className="space-y-3">
-              {faqs.map((faq, i) => (
+            <FAQSchema items={items} />
+            <Accordion type="single" collapsible defaultValue="item-0" className="space-y-3">
+              {items.map((faq, i) => (
                 <AccordionItem
                   key={i}
                   value={`item-${i}`}

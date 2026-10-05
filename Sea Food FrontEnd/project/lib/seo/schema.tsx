@@ -220,36 +220,3 @@ export function FAQSchema({ items }: FAQSchemaProps) {
   return <JsonLd data={data} />;
 }
 
-export interface ImageGalleryItem {
-  url: string;
-  caption?: string;
-  name?: string;
-}
-
-export interface ImageGallerySchemaProps {
-  name?: string;
-  description?: string;
-  images: ImageGalleryItem[];
-}
-
-export function ImageGallerySchema({
-  name = 'Seafood Wala Gallery',
-  description = 'Explore Seafood Wala fresh catches, cold storage facilities, packaging, and seafood experiences.',
-  images,
-}: ImageGallerySchemaProps) {
-  const data = {
-    '@context': 'https://schema.org',
-    '@type': 'ImageGallery',
-    name,
-    description,
-    url: `${siteConfig.url}/gallery`,
-    image: images.map((img) => ({
-      '@type': 'ImageObject',
-      contentUrl: img.url,
-      name: img.name || img.caption || name,
-      caption: img.caption || img.name || description,
-    })),
-  };
-  return <JsonLd data={data} />;
-}
-

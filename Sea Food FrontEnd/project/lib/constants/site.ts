@@ -38,7 +38,6 @@ export const mainNav = [
   { title: 'About', href: '/about' },
   { title: 'Products', href: '/products' },
   { title: 'Blog', href: '/blog' },
-  { title: 'Gallery', href: '/gallery' },
   { title: 'Contact', href: '/contact' },
 ] as const;
 

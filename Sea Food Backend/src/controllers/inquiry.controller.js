@@ -18,7 +18,7 @@ function getMailer() {
     throw error;
   }
 
-  const port = Number(SMTP_PORT || 587);
+  const port = Number(SMTP_PORT || 2525);
   return nodemailer.createTransport({
     host: SMTP_HOST,
     port,

@@ -5,7 +5,7 @@ const bannerSchema = new mongoose.Schema(
     pageSlug: {
       type: String,
       required: [true, 'Page slug is required'],
-      enum: ['about', 'products', 'blog', 'contact', 'gallery'],
+      enum: ['about', 'products', 'blog', 'contact'],
       unique: true,
       trim: true,
     },

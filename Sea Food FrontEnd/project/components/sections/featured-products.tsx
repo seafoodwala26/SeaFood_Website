@@ -25,8 +25,8 @@ export function FeaturedProducts() {
         <div className="flex flex-col items-start justify-between gap-6 sm:flex-row sm:items-end">
             <SectionHeading
               eyebrow=" Latest Products"
-              title="Premium Seafood Selection"
-              description="Our most-requested fresh fish, shrimp, lobster, and shellfish — sourced sustainably and delivered with uncompromising cold chain integrity."
+              title="Explore Our Seafood Selection"
+              description="Seafood Wala is focused on providing customers with access to popular seafood choices for everyday meals as well as special occasions."
               align="left"
               className="max-w-xl"
             />

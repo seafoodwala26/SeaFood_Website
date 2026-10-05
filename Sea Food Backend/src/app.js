@@ -14,9 +14,10 @@ const productRoutes = require('./routes/product.routes');
 const siteConfigurationRoutes = require('./routes/siteConfiguration.routes');
 const heroBannerSliderRoutes = require('./routes/heroBannerSlider.routes');
 const inquiryRoutes = require('./routes/inquiry.routes');
-const galleryRoutes = require('./routes/gallery.routes');
 
 const app = express();
+// Render sits behind a trusted reverse proxy and forwards the client IP.
+app.set('trust proxy', 1);
 const defaultAllowedOrigins = [
   'http://localhost:3000',
   'https://polite-souffle-8eb98a.netlify.app',
@@ -72,7 +73,6 @@ app.use('/api/products', productRoutes);
 app.use('/api/site-configuration', siteConfigurationRoutes);
 app.use('/api/hero-banner-sliders', heroBannerSliderRoutes);
 app.use('/api/inquiries', inquiryRoutes);
-app.use('/api/gallery', galleryRoutes);
 
 app.use((req, res) => {res.status(404).json({ status: 'fail', message: 'Route not found' });});
 

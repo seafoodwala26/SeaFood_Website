@@ -1,4 +1,4 @@
-import type { Testimonial, FAQItem, Stat, GalleryImage, TeamMember, Country } from '@/lib/types';
+import type { Testimonial, FAQItem, Stat, TeamMember, Country } from '@/lib/types';
 
 export const stats: Stat[] = [
   { label: 'Years of Seafood Expertise', value: '25', suffix: '+', description: 'Sourcing and distributing premium seafood since 2001' },
@@ -78,91 +78,63 @@ export const testimonials: Testimonial[] = [
   },
 ];
 
+// Home FAQ
 export const faqs: FAQItem[] = [
   {
-    question: 'Do you ship internationally?',
+    question: 'What seafood can I order from Seafood Wala?',
     answer:
-      'Yes. We export to 40+ countries and partner with trusted cold chain freight forwarders to ensure your seafood arrives at the correct temperature. Bulk and container orders qualify for preferential freight rates — contact our export team for a quote.',
+      'Seafood availability can vary depending on sourcing and season. You can contact Seafood Wala to check currently available fish, prawns, and other seafood products.',
   },
   {
-    question: 'What is the minimum order quantity (MOQ) for wholesale?',
+    question: 'Can I place bulk seafood orders?',
     answer:
-      'MOQ varies by product. Most fresh and frozen fish start at 10 kg; shrimp and shellfish start at 5 kg. Value-added and custom platter orders have separate MOQs — reach out via the Online Inquiry page for details.',
+      'Yes, customers with larger requirements such as restaurants, hotels, caterers, cafés, and food businesses can contact Seafood Wala to discuss bulk seafood requirements and availability.',
   },
   {
-    question: 'Do you offer custom processing or private-label seafood?',
+    question: 'How can I check seafood availability and pricing?',
     answer:
-      'Absolutely. We offer custom cutting, marinating, vacuum-sealing, and private-label packaging for restaurants, distributors, and retail brands. Our processing team works with you on specifications and packaging.',
+      'You can contact Seafood Wala directly through the available communication channel to enquire about current seafood availability, quantity, and pricing.',
   },
   {
-    question: 'How do you ensure seafood freshness during shipping?',
+    question: 'Is Seafood Wala suitable for restaurant and hotel orders?',
     answer:
-      'Every order ships in specialized insulated containers with gel packs or dry ice, maintaining 0-2°C for fresh and -18°C for frozen products. Temperature loggers are included on request for bulk orders.',
+      'Seafood Wala can cater to seafood sourcing requirements for food businesses. Restaurants, hotels, cafés, caterers, and commercial kitchens can contact the team to discuss their requirements.',
   },
   {
-    question: 'Can I request a product catalog or brochure?',
+    question: 'How do I place an order?',
     answer:
-      'Yes. A downloadable brochure is available on every product detail page, and our full catalog is available on request. Submit the Online Inquiry form and select "Catalog Request" to receive the latest PDF.',
+      'Simply contact Seafood Wala, share the seafood products and quantities you require, and confirm the available options, pricing, and fulfilment details with the team.',
+  }
+];
+// About FAQ
+export const aboutFaqs: FAQItem[] = [
+  {
+    question: 'What does Seafood Wala offer?',
+    answer:
+      'Seafood Wala focuses on fish, prawns, and other seafood products. Availability can vary, so customers can contact us for the latest selection.',
   },
   {
-    question: 'How long does delivery take?',
+    question: 'Can I order seafood for my home?',
     answer:
-      'Fresh seafood ships overnight within the US and 2-4 days internationally via air freight. Frozen seafood ships 2-5 days by refrigerated container. Your account manager will confirm lead times before dispatch.',
+      'Yes. Customers can contact Seafood Wala to enquire about seafood available for home cooking and discuss their quantity requirements.',
   },
   {
-    question: 'What payment methods do you accept for international orders?',
+    question: 'Do you accept bulk seafood orders?',
     answer:
-      'We accept wire transfer (T/T), letter of credit (L/C), and major credit cards for sample orders. Payment terms are negotiable for established accounts and large contracts.',
+      'Customers with larger requirements, including restaurants, hotels, caterers, cafés, and other food businesses, can contact us to discuss bulk seafood requirements.',
   },
   {
-    question: 'Do you provide product samples?',
+    question: 'How can I check the available seafood?',
     answer:
-      'Yes. We provide paid samples for evaluation, with the sample cost credited toward your first bulk order. Sample lead time is typically 3-5 business days.',
+      'You can contact Seafood Wala directly to ask about current seafood varieties, availability, quantities, and pricing.',
+  },
+  {
+    question: 'Do seafood products vary by availability?',
+    answer:
+      'Yes. Seafood selection can vary depending on sourcing and availability. Contact us for the latest product options.',
   },
 ];
 
-export const galleryImages: GalleryImage[] = [
-  {
-    src: 'https://images.pexels.com/photos/8352394/pexels-photo-8352394.jpeg?auto=compress&cs=tinysrgb&w=900',
-    alt: 'Fresh red fish on ice at seafood market',
-    caption: 'Fresh catch, Miami Harbor',
-  },
-  {
-    src: 'https://images.pexels.com/photos/33653815/pexels-photo-33653815.jpeg?auto=compress&cs=tinysrgb&w=900',
-    alt: 'Fresh raw shrimp on ice',
-    caption: 'Jumbo tiger shrimp, ready for grading',
-  },
-  {
-    src: 'https://images.pexels.com/photos/566343/pexels-photo-566343.jpeg?auto=compress&cs=tinysrgb&w=900',
-    alt: 'Luxurious seafood platter with lobster',
-    caption: 'Premium platter for a fine dining client',
-  },
-  {
-    src: 'https://images.pexels.com/photos/10895800/pexels-photo-10895800.jpeg?auto=compress&cs=tinysrgb&w=900',
-    alt: 'Fresh oysters on ice with lemon',
-    caption: 'Blue Point oysters, half-shell ready',
-  },
-  {
-    src: 'https://images.pexels.com/photos/555775/pexels-photo-555775.jpeg?auto=compress&cs=tinysrgb&w=900',
-    alt: 'Grilled salmon steak on a barbecue',
-    caption: 'Atlantic salmon, chef-grade quality',
-  },
-  {
-    src: 'https://images.pexels.com/photos/8352344/pexels-photo-8352344.jpeg?auto=compress&cs=tinysrgb&w=900',
-    alt: 'Variety of fresh fish and seafood at market',
-    caption: 'Our daily market selection',
-  },
-  {
-    src: 'https://images.pexels.com/photos/20121107/pexels-photo-20121107.jpeg?auto=compress&cs=tinysrgb&w=900',
-    alt: 'Fresh mackerel on display at market',
-    caption: 'Wild-caught mackerel from the Atlantic',
-  },
-  {
-    src: 'https://images.pexels.com/photos/2714384/pexels-photo-2714384.jpeg?auto=compress&cs=tinysrgb&w=900',
-    alt: 'Fresh raw prawns on ice',
-    caption: 'Vannamei prawns, peeled and deveined',
-  },
-];
 
 export const countries: Country[] = [
   { code: 'US', name: 'United States' },
@@ -210,38 +182,66 @@ export const countries: Country[] = [
 export const whyChooseUs = [
   {
     icon: 'shield',
-    title: 'HACCP & MSC Certified',
+    title: 'Quality-Focused Seafood',
     description:
-      'Every product meets international food safety standards. Our facility is HACCP certified and our wild-caught products carry MSC sustainability certification.',
+      'We focus on supplying quality seafood suitable for home cooking, restaurants, hotels, cafés, and other food businesses. Every order is handled with attention to product quality and customer requirements.',
   },
   {
     icon: 'globe',
-    title: 'Global Cold Chain Network',
+    title: 'Freshness Matters',
     description:
-      'We ship to 40+ countries with dedicated cold chain freight partners and handle all export documentation, customs, and compliance in-house.',
+      'Seafood tastes best when it is handled properly. We understand the importance of freshness and aim to maintain appropriate handling practices throughout the supply process.',
   },
   {
     icon: 'leaf',
-    title: 'Sustainable Sourcing',
+    title: 'Wide Seafood Selection',
     description:
-      'We partner with MSC and ASC certified fisheries and farms. Traceability from vessel or farm to your door is guaranteed on every order.',
+      'Different customers have different preferences. Our seafood range can include popular fish, prawns, and other seafood varieties depending on availability and sourcing.',
   },
   {
     icon: 'award',
-    title: '25 Years of Seafood Trust',
+    title: 'Convenient Ordering',
     description:
-      'Since 2001, we have built relationships with the best fisheries and farms worldwide. Our quality is consistent, our standards are uncompromising.',
+      'We make it easy to enquire about seafood, availability, quantities, and pricing. Customers can connect with Seafood Wala directly to discuss their requirements and place an order.',
   },
   {
     icon: 'truck',
-    title: 'Reliable Cold Chain Delivery',
+    title: 'Reliable Service',
     description:
-      'Fresh seafood ships overnight. Frozen products arrive in refrigerated containers at -18°C. Temperature loggers available on every bulk order.',
+      'Whether you are purchasing seafood for your family or sourcing products for your food business, we believe clear communication and dependable service are essential.',
+  },
+
+];
+
+export const aboutWhyChooseUs: typeof whyChooseUs = [
+  {
+    icon: 'shield',
+    title: 'Quality-Focused Approach',
+    description:
+      'We understand the importance of seafood quality and focus on careful sourcing and handling.',
+  },
+  {
+    icon: 'globe',
+    title: 'Convenient Communication',
+    description:
+      'Customers can contact us directly to discuss seafood requirements, availability, quantities, and orders.',
+  },
+  {
+    icon: 'leaf',
+    title: 'Seafood for Home and Business',
+    description:
+      'Our services can be useful for both individual customers and businesses with larger seafood requirements.',
+  },
+  {
+    icon: 'award',
+    title: 'Flexible Requirements',
+    description:
+      'Whether you need seafood for a family meal or a larger commercial order, you can discuss your specific requirements with our team.',
   },
   {
     icon: 'headset',
-    title: 'Dedicated Account Team',
+    title: 'Customer-Focused Service',
     description:
-      'Every wholesale and export account gets a dedicated manager who knows your business and responds within one business day.',
+      'We believe good service starts with understanding what customers need. Clear communication and responsive support are important parts of our approach.',
   },
 ];

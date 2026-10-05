@@ -6,7 +6,7 @@ const booleanField = z.preprocess((value) => {
 }, z.boolean());
 
 const createBannerSchema = z.object({
-  pageSlug: z.enum(['about', 'products', 'blog', 'contact', 'gallery']),
+  pageSlug: z.enum(['about', 'products', 'blog', 'contact']),
   pageName: z.string().min(2),
   title: z.string().min(3, { message: 'Banner title is required' }),
   subtitle: z.string().optional(),

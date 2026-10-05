@@ -2,17 +2,10 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { CheckCircle2, ArrowRight, Anchor, Globe2 } from 'lucide-react';
+import { ArrowRight, Anchor, Globe2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { siteConfig } from '@/lib/constants/site';
 import { usePublicSiteConfiguration } from '@/lib/hooks/use-site-configuration';
-
-const highlights = [
-  'Founded in 2001 by commercial fishermen',
-  'HACCP & MSC certified facility',
-  'Seafood shipped to 40+ countries',
-  'Private-label and custom processing',
-];
 
 export function CompanyIntro() {
   const { data: configuration } = usePublicSiteConfiguration();
@@ -62,29 +55,15 @@ export function CompanyIntro() {
               About Seafood Wala
             </span>
             <h2 className="section-title-reveal mt-4 font-heading text-3xl font-bold tracking-tight text-foreground text-balance sm:text-4xl">
-              From Ocean to Table,{' '}
-              <span className="gradient-text">Worldwide</span>
+              Fresh Seafood You Can Trust,{' '}
+              <span className="gradient-text">Quality From the Sea to Your Table</span>
             </h2>
             <p className="mt-5 text-base leading-relaxed text-muted-foreground">
-              {siteConfig.name} began in {siteConfig.foundedYear} on the docks of Miami, where our
-              founders — commercial fishermen frustrated by inconsistent quality — started sourcing
-              their own. Today, we supply a full catalog of premium seafood and export to
-              distributors, restaurants, and retailers across {countriesServed}+ countries.
+              Welcome to <b>Seafood Wala</b>, your destination for fresh, quality seafood sourced with care and delivered with a commitment to freshness and reliability. We bring together a wide range of seafood options for families, seafood lovers, restaurants, hotels, cafés, and businesses looking for dependable seafood supply.
             </p>
             <p className="mt-4 text-base leading-relaxed text-muted-foreground">
-              Every catch is inspected, graded, and cold-chain handled in our HACCP certified
-              facility. We back our products with a freshness guarantee and a dedication to
-              sustainable sourcing.
+              From fresh fish and prawns to other popular seafood varieties, our focus is simple: <b>quality seafood, careful handling, and dependable service.</b> Whether you are planning a delicious seafood meal at home or need seafood for your restaurant or business, Seafood Wala aims to make sourcing fresh seafood easier and more convenient.
             </p>
-
-            <ul className="mt-8 grid gap-3 sm:grid-cols-2">
-              {highlights.map((item) => (
-                <li key={item} className="flex items-start gap-2.5 rounded-xl border border-border/60 bg-card/50 px-3 py-2.5 text-sm font-medium text-foreground">
-                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-brand-accent" />
-                  {item}
-                </li>
-              ))}
-            </ul>
 
             <Button asChild className="mt-8 group">
               <Link href="/about">

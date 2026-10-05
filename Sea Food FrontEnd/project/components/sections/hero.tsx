@@ -101,10 +101,7 @@ export function Hero() {
           return (
             <div
               key={s.id}
-              className={cn(
-                "absolute inset-0 transition-opacity duration-1000",
-                isActive ? "opacity-100 z-10" : "opacity-0 z-0"
-              )}
+              className={cn("absolute inset-0 transition-opacity duration-1000",  isActive ? "opacity-100 z-10" : "opacity-0 z-0")}
             >
               <Image
                 src={s.image}
@@ -114,6 +111,7 @@ export function Hero() {
                 sizes="100vw"
                 className={cn("object-cover", isActive && "animate-ken-burns")}
                 priority={i === 0}
+                fetchPriority={i === 0 ? "high" : "auto"}
                 loading={i === 0 ? "eager" : "lazy"}
               />
               {/* Ocean gradient overlays */}
@@ -144,6 +142,7 @@ export function Hero() {
               {slides.map((s, i) => {
                 const isActive = i === current;
                 const Icon = seafoodIcons[i % seafoodIcons.length];
+                const Heading = i === 0 ? "h1" : "h2";
                 return (
                   <div
                     key={s.id}
@@ -169,12 +168,12 @@ export function Hero() {
                       </div>
                     </div>
 
-                    <h1 className="motion-reveal mt-7 font-heading text-4xl font-bold leading-[1.05] tracking-tight text-white sm:text-5xl lg:text-6xl text-shadow-hero" style={{ animationDelay: '100ms' }}>
+                    <Heading className="motion-reveal mt-7 font-heading text-4xl font-bold leading-[1.05] tracking-tight text-white sm:text-5xl lg:text-6xl text-shadow-hero" style={{ animationDelay: '100ms' }}>
                       {s.title}
                       <span className="mt-2 block bg-gradient-to-r from-brand-accent via-brand-accent-light to-brand-primary bg-clip-text text-transparent">
                         {s.highlight}
                       </span>
-                    </h1>
+                    </Heading>
 
                     <p className="motion-reveal mt-6 max-w-xl text-base leading-relaxed text-white/75 sm:text-lg" style={{ animationDelay: '180ms' }}>
                       {s.description}

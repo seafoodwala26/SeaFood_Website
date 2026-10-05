@@ -65,7 +65,7 @@ export interface BlogPayload {
 
 export interface ApiBanner {
   _id: string;
-  pageSlug: 'about' | 'products' | 'blog' | 'contact' | 'gallery';
+  pageSlug: 'about' | 'products' | 'blog' | 'contact';
   pageName: string;
   title: string;
   subtitle?: string;
@@ -87,16 +87,6 @@ export interface SiteConfiguration {
   tagline: string; facebookUrl: string; linkedinUrl: string; instagramUrl: string;
   mobileNumber: string; email: string; workingDays: string; officeHours: string; fullAddress: string;
   mapEmbedUrl: string;
-}
-
-export interface ApiGalleryImage {
-  _id: string;
-  name: string;
-  image: { publicId: string; url: string; originalName?: string };
-  isActive: boolean;
-  sortOrder: number;
-  createdAt: string;
-  updatedAt: string;
 }
 
 export interface ApiCategory {
@@ -332,18 +322,4 @@ export const heroBannerSliderApi = {
   create: async (payload: HeroBannerSliderPayload) => (await api.post<{ data: ApiHeroBannerSlider }>('/hero-banner-sliders', await toHeroSliderFormData(payload))).data.data,
   update: async (id: string, payload: HeroBannerSliderPayload) => (await api.patch<{ data: ApiHeroBannerSlider }>(`/hero-banner-sliders/${id}`, await toHeroSliderFormData(payload))).data.data,
   remove: (id: string) => api.delete(`/hero-banner-sliders/${id}`),
-};
-
-export const galleryApi = {
-  publicList: async () => (await api.get<{ data: ApiGalleryImage[] }>('/gallery/public')).data.data,
-  list: async () => (await api.get<{ data: ApiGalleryImage[] }>('/gallery')).data.data,
-  create: async (files: File[], names: string[]) => {
-    const formData = new FormData();
-    files.forEach((file) => formData.append('images', file));
-    formData.append('names', JSON.stringify(names));
-    return (await api.post<{ data: ApiGalleryImage[] }>('/gallery', formData)).data.data;
-  },
-  update: async (id: string, payload: { name?: string; isActive?: boolean; sortOrder?: number }) =>
-    (await api.patch<{ data: ApiGalleryImage }>(`/gallery/${id}`, payload)).data.data,
-  remove: (id: string) => api.delete(`/gallery/${id}`),
 };

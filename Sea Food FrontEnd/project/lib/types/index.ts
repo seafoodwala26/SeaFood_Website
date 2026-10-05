@@ -87,12 +87,6 @@ export interface Stat {
   description: string;
 }
 
-export interface GalleryImage {
-  src: string;
-  alt: string;
-  caption: string;
-}
-
 export interface TeamMember {
   name: string;
   role: string;
