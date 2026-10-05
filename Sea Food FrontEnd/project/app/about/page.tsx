@@ -187,9 +187,11 @@ export default function AboutPage() {
                 <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-accent/10 text-brand-accent">
                   <Handshake className="h-6 w-6" aria-hidden="true" />
                 </div>
+              
                 <h3 className="mt-6 font-heading text-2xl font-bold text-foreground sm:text-3xl">
                   Our Commitment to Customers
                 </h3>
+                
                 <div className="mt-4 space-y-4 text-sm leading-relaxed text-muted-foreground sm:text-base">
                   <p>
                     At Seafood Wala, we know that customers have choices when
