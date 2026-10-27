@@ -20,7 +20,7 @@ const app = express();
 app.set('trust proxy', 1);
 const defaultAllowedOrigins = [
   'http://localhost:3000',
-  'https://polite-souffle-8eb98a.netlify.app',
+  'https://seafoodwala.netlify.app',
 ];
 const allowedOrigins = [...new Set([
   ...defaultAllowedOrigins,
