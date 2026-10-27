@@ -1,5 +1,7 @@
 import { Skeleton } from '@/components/ui/skeleton';
 
+
+
 export function BlogCardSkeleton() {
   return (
     <article className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-soft">
