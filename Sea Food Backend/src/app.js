@@ -21,6 +21,7 @@ app.set('trust proxy', 1);
 const defaultAllowedOrigins = [
   'http://localhost:3000',
   'https://seafoodwala.netlify.app',
+  'https://seafoodwala.in',
 ];
 const allowedOrigins = [...new Set([
   ...defaultAllowedOrigins,
