@@ -1,8 +1,6 @@
 const multer = require('multer');
 
 const imageMimeTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
-const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
-
 const storage = multer.memoryStorage();
 
 const fileFilter = (req, file, cb) => {
@@ -12,26 +10,24 @@ const fileFilter = (req, file, cb) => {
   cb(null, true);
 };
 
-function uploadSingle(fieldName, maxFileSize = MAX_IMAGE_SIZE) {
+function uploadSingle(fieldName) {
   return multer({
     storage,
-    limits: { fileSize: maxFileSize },
     fileFilter,
   }).single(fieldName);
 }
 
-function uploadFields(fields, maxFileSize = MAX_IMAGE_SIZE) {
+function uploadFields(fields) {
   return multer({
     storage,
-    limits: { fileSize: maxFileSize },
     fileFilter,
   }).fields(fields);
 }
 
-function uploadMultiple(fieldName, maxCount = 10, maxFileSize = MAX_IMAGE_SIZE) {
+function uploadMultiple(fieldName, maxCount = 10) {
   return multer({
     storage,
-    limits: { fileSize: maxFileSize, files: maxCount },
+    limits: { files: maxCount },
     fileFilter,
   }).array(fieldName, maxCount);
 }

@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { categoryApi, type CategoryPayload } from '@/lib/api';
+import { useAdminFormErrors } from '@/components/admin/use-admin-form-errors';
 
 const emptyForm: CategoryPayload = { catName: '', description: '', metaTitle: '', metaDescription: '', image: '', imageName: '' };
 const PAGE_SIZE = 5;
@@ -22,7 +23,7 @@ export default function AdminCategoriesPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
-  const [error, setError] = useState<string | null>(null);
+  const { fieldErrors, formError: error, setFieldErrors, handleError, clearFieldError, clearErrors } = useAdminFormErrors();
   const { data: categories = [], isLoading, error: loadError } = useQuery({ queryKey: ['categories'], queryFn: categoryApi.list });
 
   const filtered = useMemo(
@@ -43,7 +44,7 @@ export default function AdminCategoriesPage() {
       setShowForm(false);
       setPage(1);
     },
-    onError: (requestError: Error) => setError(requestError.message),
+    onError: handleError,
   });
 
   const deleteMutation = useMutation({
@@ -56,17 +57,21 @@ export default function AdminCategoriesPage() {
 
   const submit = (event: FormEvent) => {
     event.preventDefault();
+    clearErrors();
     if (!form.catName.trim() || form.description.trim().length < 10 || (!editingId && !form.image)) {
-      return setError(editingId ? 'Name and a 10-character description are required.' : 'Name, a 10-character description, and an image are required.');
+      const nextErrors: Record<string, string> = {};
+      if (!form.catName.trim()) nextErrors.catName = 'Category Name is required.';
+      if (form.description.trim().length < 10) nextErrors.description = 'Description must be at least 10 characters.';
+      if (!editingId && !form.image) nextErrors.image = 'Category Image is required.';
+      return setFieldErrors(nextErrors);
     }
-    setError(null);
     saveMutation.mutate(form);
   };
 
   const handleOpenAddForm = () => {
     setForm(emptyForm);
     setEditingId(null);
-    setError(null);
+    clearErrors();
     setShowForm(true);
   };
 
@@ -80,7 +85,7 @@ export default function AdminCategoriesPage() {
       imageName: category.image?.originalName || '',
     });
     setEditingId(category._id);
-    setError(null);
+    clearErrors();
     setShowForm(true);
   };
 
@@ -89,23 +94,23 @@ export default function AdminCategoriesPage() {
     {showForm && <form onSubmit={submit} className="rounded-xl border border-border bg-card p-5 shadow-soft sm:p-6">
       <div className="mb-5 flex items-center justify-between gap-3">
         <div className="flex items-center gap-3">
-          <Button type="button" variant="ghost" size="sm" onClick={() => { setShowForm(false); setEditingId(null); setError(null); }} className="h-8 px-2 text-muted-foreground hover:text-foreground">
+          <Button type="button" variant="ghost" size="sm" onClick={() => { setShowForm(false); setEditingId(null); clearErrors(); }} className="h-8 px-2 text-muted-foreground hover:text-foreground">
             <ArrowLeft className="mr-1.5 h-4 w-4" />Back
           </Button>
           <h2 className="font-heading text-lg font-semibold">{editingId ? 'Edit Product Category' : 'Add Product Category'}</h2>
         </div>
-        <Button type="button" variant="ghost" size="icon" onClick={() => { setShowForm(false); setEditingId(null); setError(null); }} aria-label="Close form">
+        <Button type="button" variant="ghost" size="icon" onClick={() => { setShowForm(false); setEditingId(null); clearErrors(); }} aria-label="Close form">
           <ChevronRight className="h-4 w-4 rotate-45" />
         </Button>
       </div>
       <div className="grid gap-5 md:grid-cols-2">
-        <AdminFormField label="Category Name" htmlFor="category-name" required className="md:col-span-2"><Input id="category-name" value={form.catName} onChange={(event) => setForm((state) => ({ ...state, catName: event.target.value }))} placeholder="e.g. Fresh Fish" /></AdminFormField>
-        <AdminFormField label="Description" htmlFor="category-description" required className="md:col-span-2"><Textarea id="category-description" rows={3} value={form.description} onChange={(event) => setForm((state) => ({ ...state, description: event.target.value }))} placeholder="At least 10 characters" /></AdminFormField>
-        <AdminFormField label="Category Image" htmlFor="category-image" required><ImageUpload id="category-image" value={form.image} fileName={form.imageName} onChange={(image, imageName) => setForm((state) => ({ ...state, image, imageName: imageName || '' }))} aspectRatio="4/3" /></AdminFormField>
-        <div className="space-y-5"><AdminFormField label="Meta Title" htmlFor="meta-title"><Input id="meta-title" value={form.metaTitle} placeholder="Enter SEO meta title" onChange={(event) => setForm((state) => ({ ...state, metaTitle: event.target.value }))} /></AdminFormField><AdminFormField label="Meta Description" htmlFor="meta-description"><Textarea id="meta-description" rows={2} value={form.metaDescription} placeholder="Enter SEO meta description" onChange={(event) => setForm((state) => ({ ...state, metaDescription: event.target.value }))} /></AdminFormField></div>
+        <AdminFormField label="Category Name" htmlFor="category-name" required error={fieldErrors.catName} className="md:col-span-2"><Input id="category-name" value={form.catName} onChange={(event) => { clearFieldError('catName'); setForm((state) => ({ ...state, catName: event.target.value })); }} placeholder="e.g. Fresh Fish" /></AdminFormField>
+        <AdminFormField label="Description" htmlFor="category-description" required error={fieldErrors.description} className="md:col-span-2"><Textarea id="category-description" rows={3} value={form.description} onChange={(event) => { clearFieldError('description'); setForm((state) => ({ ...state, description: event.target.value })); }} placeholder="At least 10 characters" /></AdminFormField>
+        <AdminFormField label="Category Image" htmlFor="category-image" required error={fieldErrors.image}><ImageUpload id="category-image" value={form.image} fileName={form.imageName} onChange={(image, imageName) => { clearFieldError('image'); setForm((state) => ({ ...state, image, imageName: imageName || '' })); }} aspectRatio="4/3" className={fieldErrors.image ? 'rounded-lg ring-1 ring-destructive' : undefined} /></AdminFormField>
+        <div className="space-y-5"><AdminFormField label="Meta Title" htmlFor="meta-title" error={fieldErrors.metaTitle}><Input id="meta-title" value={form.metaTitle} placeholder="Enter SEO meta title" onChange={(event) => { clearFieldError('metaTitle'); setForm((state) => ({ ...state, metaTitle: event.target.value })); }} /></AdminFormField><AdminFormField label="Meta Description" htmlFor="meta-description" error={fieldErrors.metaDescription}><Textarea id="meta-description" rows={2} value={form.metaDescription} placeholder="Enter SEO meta description" onChange={(event) => { clearFieldError('metaDescription'); setForm((state) => ({ ...state, metaDescription: event.target.value })); }} /></AdminFormField></div>
       </div>
       {error && <p className="mt-4 text-sm text-destructive">{error}</p>}
-      <div className="mt-5 flex gap-3"><Button type="submit" disabled={saveMutation.isPending}><Save className="mr-2 h-4 w-4" />{editingId ? 'Update Category' : 'Save Category'}</Button><Button type="button" variant="outline" onClick={() => { setShowForm(false); setEditingId(null); setError(null); }}>Cancel</Button></div>
+      <div className="mt-5 flex gap-3"><Button type="submit" disabled={saveMutation.isPending}><Save className="mr-2 h-4 w-4" />{editingId ? 'Update Category' : 'Save Category'}</Button><Button type="button" variant="outline" onClick={() => { setShowForm(false); setEditingId(null); clearErrors(); }}>Cancel</Button></div>
     </form>}
     <div className="overflow-hidden rounded-xl border border-border bg-card shadow-soft">
       <div className="flex flex-col gap-3 border-b border-border p-4 sm:flex-row sm:items-center sm:justify-between"><div className="relative max-w-xs flex-1"><Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" /><Input value={search} onChange={(event) => { setSearch(event.target.value); setPage(1); }} placeholder="Search categories..." className="pl-9" /></div><span className="text-sm text-muted-foreground">{filtered.length} categories</span></div>

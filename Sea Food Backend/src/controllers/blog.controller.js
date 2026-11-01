@@ -1,10 +1,12 @@
 const Blog = require('../modules/blog.model');
+const mongoose = require('mongoose');
 const { uploadImage, replaceImage, deleteImage } = require('../utils/cloudinaryImage');
 
 async function createBlog(req, res) {
   const data = req.body;
   const blogData = {
-    ...data
+    ...data,
+    isDraft: false,
   };
 
   blogData.blogImg = await uploadImage(req.file, 'seafood/blogs');
@@ -13,10 +15,23 @@ async function createBlog(req, res) {
   return res.status(201).json({ status: 'success', data: blog });
 }
 
+async function createBlogDraft(req, res) {
+  const blog = new Blog({
+    ...req.body,
+    url: `draft-${new mongoose.Types.ObjectId().toString()}`,
+    draftUrl: req.body.url || '',
+    isDraft: true,
+    isActive: false,
+  });
+  if (req.file) blog.blogImg = await uploadImage(req.file, 'seafood/blogs');
+  await blog.save();
+  return res.status(201).json({ status: 'success', data: blog });
+}
+
 async function getPublicBlogs(req, res) {
   const page = Math.max(Number(req.query.page) || 1, 1);
   const limit = Math.min(Math.max(Number(req.query.limit) || 12, 1), 100);
-  const filter = { isActive: { $ne: false } };
+  const filter = { isDraft: { $ne: true }, isActive: { $ne: false } };
   const search = String(req.query.search || '').trim();
   const category = String(req.query.category || '').trim();
 
@@ -44,7 +59,7 @@ async function getPublicBlogs(req, res) {
 
 async function getPublicBlogByUrl(req, res) {
   const slug = String(req.params.slug).trim();
-  const blog = await Blog.findOne({ isActive: { $ne: false }, url: { $regex: `^${slug.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, $options: 'i' } }).select('-author');
+  const blog = await Blog.findOne({ isDraft: { $ne: true }, isActive: { $ne: false }, url: { $regex: `^${slug.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, $options: 'i' } }).select('-author');
   if (!blog) {
     return res.status(404).json({ status: 'fail', message: 'Blog not found' });
   }
@@ -96,19 +111,43 @@ async function updateBlog(req, res) {
 
   if (req.file) req.body.blogImg = await replaceImage(req.file, blog.blogImg, 'seafood/blogs');
 
-  Object.assign(blog, req.body);
+  const { isDraft, ...fields } = req.body;
+  Object.assign(blog, fields);
+  if (isDraft === false && blog.isDraft) {
+    blog.isDraft = false;
+    blog.draftUrl = undefined;
+  } else if (isDraft !== undefined) {
+    blog.isDraft = isDraft;
+  }
   await blog.save();
 
   res.json({ status: 'success', data: blog });
 }
 
-async function updateBlogStatus(req, res) {
-  const blog = await Blog.findByIdAndUpdate(
-    req.params.id,
-    { isActive: req.body.isActive },
-    { new: true, runValidators: true },
-  );
+async function updateBlogDraft(req, res) {
+  const blog = await Blog.findById(req.params.id);
   if (!blog) return res.status(404).json({ status: 'fail', message: 'Blog not found' });
+  if (!blog.isDraft) {
+    return res.status(400).json({ status: 'fail', message: 'Only drafts can be autosaved.' });
+  }
+
+  if (req.file) blog.blogImg = await replaceImage(req.file, blog.blogImg, 'seafood/blogs');
+  const { url, ...fields } = req.body;
+  Object.assign(blog, fields);
+  if (url !== undefined) blog.draftUrl = url;
+  blog.isActive = false;
+  await blog.save();
+  return res.json({ status: 'success', data: blog });
+}
+
+async function updateBlogStatus(req, res) {
+  const blog = await Blog.findById(req.params.id);
+  if (!blog) return res.status(404).json({ status: 'fail', message: 'Blog not found' });
+  if (blog.isDraft && req.body.isActive) {
+    return res.status(400).json({ status: 'fail', message: 'Publish the draft from the editor before activating it.' });
+  }
+  blog.isActive = req.body.isActive;
+  await blog.save();
   res.json({ status: 'success', data: blog });
 }
 
@@ -126,4 +165,4 @@ async function deleteBlog(req, res) {
   res.json({ status: 'success', message: 'Blog deleted' });
 }
 
-module.exports = { createBlog, getAllBlogs, getPublicBlogs, getPublicBlogByUrl, getBlogById, updateBlog, updateBlogStatus, deleteBlog };
+module.exports = { createBlog, createBlogDraft, getAllBlogs, getPublicBlogs, getPublicBlogByUrl, getBlogById, updateBlog, updateBlogDraft, updateBlogStatus, deleteBlog };

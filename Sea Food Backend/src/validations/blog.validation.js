@@ -18,6 +18,22 @@ const faqArraySchema = z
   }, z.array(faqItemSchema).optional())
   .optional();
 
+const draftFaqArraySchema = z
+  .preprocess((value) => {
+    if (typeof value === 'string') {
+      try {
+        return JSON.parse(value);
+      } catch (error) {
+        return value;
+      }
+    }
+    return value;
+  }, z.array(z.object({
+    question: z.string().optional(),
+    answer: z.string().optional(),
+  })).optional())
+  .optional();
+
 const tagsSchema = z
   .preprocess((value) => {
     if (typeof value === 'string') {
@@ -57,7 +73,27 @@ const createBlogSchema = z.object({
   tags: tagsSchema,
 });
 
-const updateBlogSchema = createBlogSchema.partial();
+const updateBlogSchema = createBlogSchema.partial().extend({
+  isDraft: z.preprocess((value) => {
+    if (typeof value === 'string') return value === 'true' || value === '1';
+    return Boolean(value);
+  }, z.literal(false)).optional(),
+});
+const draftBlogSchema = z.object({
+  blogTitle: z.string().optional(),
+  url: z.string().optional(),
+  category: z.string().optional(),
+  excerpt: z.string().max(320).optional(),
+  content: z.string().optional(),
+  isFeatured: z.preprocess((value) => {
+    if (typeof value === 'string') return value === 'true' || value === '1';
+    return Boolean(value);
+  }, z.boolean()).optional(),
+  seoTitle: z.string().max(70).optional(),
+  seoMeta: z.string().max(160).optional(),
+  faq: draftFaqArraySchema,
+  tags: tagsSchema,
+});
 const blogStatusSchema = z.object({ isActive: booleanField });
 
-module.exports = { createBlogSchema, updateBlogSchema, blogStatusSchema };
+module.exports = { createBlogSchema, updateBlogSchema, draftBlogSchema, blogStatusSchema };

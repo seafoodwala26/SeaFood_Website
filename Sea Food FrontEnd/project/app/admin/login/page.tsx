@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ThemeProvider } from '@/components/admin/theme-provider';
-import { authApi } from '@/lib/api';
+import { ApiRequestError, authApi } from '@/lib/api';
 
 export default function AdminLoginPage() {
   const [email, setEmail] = useState('');
@@ -16,6 +16,7 @@ export default function AdminLoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [remember, setRemember] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const router = useRouter();
   const searchParams = useSearchParams();
   const loginMutation = useMutation({ mutationFn: authApi.login });
@@ -23,8 +24,12 @@ export default function AdminLoginPage() {
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError(null);
+    setFieldErrors({});
     if (!email || !password) {
-      setError('Please enter both email and password.');
+      setFieldErrors({
+        ...(!email ? { email: 'Email Address is required.' } : {}),
+        ...(!password ? { password: 'Password is required.' } : {}),
+      });
       return;
     }
     try {
@@ -32,7 +37,11 @@ export default function AdminLoginPage() {
       router.replace(searchParams.get('next') || '/admin');
       router.refresh();
     } catch (loginError) {
-      setError(loginError instanceof Error ? loginError.message : 'Unable to sign in.');
+      if (loginError instanceof ApiRequestError && Object.keys(loginError.fieldErrors).length > 0) {
+        setFieldErrors(loginError.fieldErrors);
+      } else {
+        setError(loginError instanceof Error ? loginError.message : 'Unable to sign in.');
+      }
     }
   };
 
@@ -75,13 +84,21 @@ export default function AdminLoginPage() {
                     id="email"
                     type="email"
                     value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    onChange={(e) => {
+                      setEmail(e.target.value);
+                      setFieldErrors((current) => {
+                        const next = { ...current };
+                        delete next.email;
+                        return next;
+                      });
+                    }}
                     placeholder="admin@seafoodwala.in"
-                    className="pl-9"
+                    className={fieldErrors.email ? 'border-destructive pl-9 focus-visible:ring-destructive' : 'pl-9'}
                     autoComplete="email"
                     autoFocus
                   />
                 </div>
+                {fieldErrors.email && <p className="text-xs text-destructive" role="alert">{fieldErrors.email}</p>}
               </div>
 
               {/* Password */}
@@ -97,9 +114,16 @@ export default function AdminLoginPage() {
                     id="password"
                     type={showPassword ? 'text' : 'password'}
                     value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                    onChange={(e) => {
+                      setPassword(e.target.value);
+                      setFieldErrors((current) => {
+                        const next = { ...current };
+                        delete next.password;
+                        return next;
+                      });
+                    }}
                     placeholder="Enter your password"
-                    className="px-9"
+                    className={fieldErrors.password ? 'border-destructive px-9 focus-visible:ring-destructive' : 'px-9'}
                     autoComplete="current-password"
                   />
                   <button
@@ -111,6 +135,7 @@ export default function AdminLoginPage() {
                     {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
                 </div>
+                {fieldErrors.password && <p className="text-xs text-destructive" role="alert">{fieldErrors.password}</p>}
               </div>
 
               {/* Remember */}

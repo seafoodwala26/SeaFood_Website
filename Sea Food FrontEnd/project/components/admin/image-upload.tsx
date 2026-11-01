@@ -43,10 +43,6 @@ export function ImageUpload({
       setError('Please select an image file (PNG, JPG, WebP)');
       return;
     }
-    if (file.size > 5 * 1024 * 1024) {
-      setError('Image must be under 5MB');
-      return;
-    }
     const reader = new FileReader();
     reader.onload = () => {
       onChange(reader.result as string, file.name);
@@ -81,7 +77,11 @@ export function ImageUpload({
   };
 
   return (
-    <div className={cn('space-y-2', className)}>
+    <div className={cn(
+      'space-y-2',
+      error && '[&>div:nth-child(2)]:border-destructive [&>div:nth-child(2)]:ring-1 [&>div:nth-child(2)]:ring-destructive',
+      className,
+    )}>
       {label && (
         <label className="text-sm font-medium text-foreground" htmlFor={id}>
           {label}
@@ -136,7 +136,7 @@ export function ImageUpload({
             </div>
             <div>
               <p className="text-sm font-medium text-foreground">Click to upload or drag & drop</p>
-              <p className="text-xs text-muted-foreground">PNG, JPG, WebP up to 5MB</p>
+              <p className="text-xs text-muted-foreground">PNG, JPG, or WebP</p>
             </div>
           </div>
         </div>

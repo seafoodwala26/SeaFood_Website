@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { productApi, categoryApi, type ApiProduct, type ProductPayload } from '@/lib/api';
+import { useAdminFormErrors } from '@/components/admin/use-admin-form-errors';
 
 const emptyForm: ProductPayload = { title: '', category: '', images: [], imageNames: [], description: '', features: [], metaTitle: '', metaDescription: '', faqs: [], isActive: true };
 const PAGE_SIZE = 10;
@@ -61,7 +62,7 @@ function CategoryPicker({ categories, value, onChange, allowAll = false, placeho
 function readImages(files: FileList | null, onImage: (image: string, name: string) => void) {
   if (!files?.length) return;
   Array.from(files).forEach((file) => {
-    if (!file.type.startsWith('image/') || file.size > 5 * 1024 * 1024) return;
+    if (!file.type.startsWith('image/')) return;
     const reader = new FileReader();
     reader.onload = () => onImage(reader.result as string, file.name);
     reader.readAsDataURL(file);
@@ -77,7 +78,7 @@ export default function AdminProductsPage() {
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState('all');
   const [page, setPage] = useState(1);
-  const [error, setError] = useState<string | null>(null);
+  const { fieldErrors, formError: error, setFieldErrors, handleError, clearFieldError, clearErrors } = useAdminFormErrors();
   const { data: categories = [] } = useQuery({ queryKey: ['categories'], queryFn: categoryApi.list });
   const { data, isLoading, isError } = useQuery({ queryKey: ['products', page, search, category], queryFn: () => productApi.list({ page, limit: PAGE_SIZE, search, category: category === 'all' ? undefined : category }) });
   const products = data?.data || [];
@@ -88,7 +89,7 @@ export default function AdminProductsPage() {
   const saveMutation = useMutation({
     mutationFn: (payload: ProductPayload) => editingId ? productApi.update(editingId, payload) : productApi.create(payload),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['products'] }); closeForm(); },
-    onError: (saveError: Error) => setError(saveError.message),
+    onError: handleError,
   });
   const deleteMutation = useMutation({ mutationFn: productApi.remove, onSuccess: () => queryClient.invalidateQueries({ queryKey: ['products'] }) });
   const toggleActiveMutation = useMutation({
@@ -105,22 +106,31 @@ export default function AdminProductsPage() {
       isActive,
     }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['products'] }),
-    onError: (toggleError: Error) => setError(toggleError.message),
+    onError: handleError,
   });
 
-  const closeForm = () => { setShowForm(false); setEditingId(null); setForm(emptyForm); setFeatureInput(''); setError(null); };
+  const closeForm = () => { setShowForm(false); setEditingId(null); setForm(emptyForm); setFeatureInput(''); clearErrors(); };
   const submit = (event: FormEvent) => {
     event.preventDefault();
-    if (!form.title.trim() || !form.category || !form.description.trim() || !form.images.length) return setError('Title, category, description, and at least one image are required.');
-    setError(null);
+    clearErrors();
+    const errors: Record<string, string> = {};
+    if (!form.title.trim()) errors.title = 'Title is required.';
+    if (!form.category) errors.category = 'Category is required.';
+    if (!form.description.trim()) errors.description = 'Description is required.';
+    if (!form.images.length) errors.images = 'At least one Product Image is required.';
+    if (Object.keys(errors).length) return setFieldErrors(errors);
     saveMutation.mutate(form);
   };
   const edit = (product: ApiProduct) => {
+    clearErrors();
     setForm({ title: product.title, category: product.category._id, images: product.images.map((image) => image.url), imageNames: product.images.map((image) => image.originalName || ''), description: product.description, features: product.features || [], metaTitle: product.metaTitle || '', metaDescription: product.metaDescription || '', faqs: product.faqs || [], isActive: product.isActive });
     setFeatureInput('');
     setEditingId(product._id); setShowForm(true);
   };
-  const updateField = <K extends keyof ProductPayload>(key: K, value: ProductPayload[K]) => setForm((current) => ({ ...current, [key]: value }));
+  const updateField = <K extends keyof ProductPayload>(key: K, value: ProductPayload[K]) => {
+    clearFieldError(String(key));
+    setForm((current) => ({ ...current, [key]: value }));
+  };
   const addFeature = () => {
     const value = featureInput.trim();
     if (!value) return;
@@ -142,16 +152,16 @@ export default function AdminProductsPage() {
         { label: 'Products List', href: '/admin/products' },
       ]}
       description="Manage products saved in your backend."
-      actions={!showForm && <Button onClick={() => { setForm(emptyForm); setFeatureInput(''); setEditingId(null); setError(null); setShowForm(true); }}><Plus className="mr-2 h-4 w-4" />Add Product</Button>}
+      actions={!showForm && <Button onClick={() => { setForm(emptyForm); setFeatureInput(''); setEditingId(null); clearErrors(); setShowForm(true); }}><Plus className="mr-2 h-4 w-4" />Add Product</Button>}
     />
     {showForm && <form onSubmit={submit} className="rounded-xl border border-border bg-card p-5 shadow-soft sm:p-6">
       <div className="mb-5 flex items-center justify-between"><h2 className="font-heading text-lg font-semibold">{editingId ? 'Edit Product' : 'Add Product'}</h2><Button type="button" variant="ghost" size="icon" onClick={closeForm}><X className="h-4 w-4" /></Button></div>
       <div className="grid gap-5 md:grid-cols-2">
-        <AdminFormField label="Product Title" htmlFor="product-title" required><Input id="product-title" value={form.title} placeholder="Enter product title" onChange={(event) => updateField('title', event.target.value)} /></AdminFormField>
-        <AdminFormField label="Category" htmlFor="product-category" required><CategoryPicker categories={categories} value={form.category} onChange={(value) => updateField('category', value)} /></AdminFormField>
-        <AdminFormField label="Description" htmlFor="product-description" required className="md:col-span-2"><Textarea id="product-description" rows={4} value={form.description} placeholder="Write a detailed product description" onChange={(event) => updateField('description', event.target.value)} /></AdminFormField>
-        <AdminFormField label="Product Images" htmlFor="product-images" required className="md:col-span-2"><Input id="product-images" type="file" accept="image/png,image/jpeg,image/webp" multiple aria-label="Select product images" onChange={(event) => readImages(event.target.files, (image, name) => setForm((current) => ({ ...current, images: [...current.images, image], imageNames: [...(current.imageNames || []), name] })))} /><div className="mt-3 flex flex-wrap gap-3">{form.images.map((image, index) => <div key={`${image}-${index}`} className="relative h-20 w-24 overflow-hidden rounded-md bg-muted"><Image src={image} alt={`Product image ${index + 1}`} fill sizes="96px" className="object-cover" /><button type="button" aria-label="Remove image" className="absolute right-1 top-1 rounded-full bg-black/60 p-1 text-white" onClick={() => updateField('images', form.images.filter((_, imageIndex) => imageIndex !== index))}><X className="h-3 w-3" /></button></div>)}</div></AdminFormField>
-        <AdminFormField label="Features" htmlFor="product-features" required className="md:col-span-2">
+        <AdminFormField label="Product Title" htmlFor="product-title" required error={fieldErrors.title}><Input id="product-title" value={form.title} placeholder="Enter product title" onChange={(event) => updateField('title', event.target.value)} /></AdminFormField>
+        <AdminFormField label="Category" htmlFor="product-category" required error={fieldErrors.category}><CategoryPicker categories={categories} value={form.category} onChange={(value) => updateField('category', value)} /></AdminFormField>
+        <AdminFormField label="Description" htmlFor="product-description" required error={fieldErrors.description} className="md:col-span-2"><Textarea id="product-description" rows={4} value={form.description} placeholder="Write a detailed product description" onChange={(event) => updateField('description', event.target.value)} /></AdminFormField>
+        <AdminFormField label="Product Images" htmlFor="product-images" required error={fieldErrors.images || fieldErrors.existingImages} className="md:col-span-2"><Input id="product-images" type="file" accept="image/png,image/jpeg,image/webp" multiple aria-label="Select product images" onChange={(event) => { clearFieldError('images'); clearFieldError('existingImages'); readImages(event.target.files, (image, name) => setForm((current) => ({ ...current, images: [...current.images, image], imageNames: [...(current.imageNames || []), name] }))); }} /><div className="mt-3 flex flex-wrap gap-3">{form.images.map((image, index) => <div key={`${image}-${index}`} className="relative h-20 w-24 overflow-hidden rounded-md bg-muted"><Image src={image} alt={`Product image ${index + 1}`} fill sizes="96px" className="object-cover" /><button type="button" aria-label="Remove image" className="absolute right-1 top-1 rounded-full bg-black/60 p-1 text-white" onClick={() => updateField('images', form.images.filter((_, imageIndex) => imageIndex !== index))}><X className="h-3 w-3" /></button></div>)}</div></AdminFormField>
+        <AdminFormField label="Features" htmlFor="product-features" required error={fieldErrors.features} className="md:col-span-2">
           <div className="flex gap-2">
             <Input id="product-features" value={featureInput} placeholder="e.g. Material: PP, Weight: 500g" onChange={(event) => setFeatureInput(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter') { event.preventDefault(); addFeature(); } }} />
             <Button type="button" variant="outline" onClick={addFeature}><Plus className="mr-1.5 h-4 w-4" />Add</Button>
@@ -162,13 +172,13 @@ export default function AdminProductsPage() {
           <div>
             <h2 className="font-heading text-sm font-semibold uppercase tracking-wider text-foreground">SEO Details</h2>
             <div className="mt-4 grid gap-5 md:grid-cols-2">
-              <AdminFormField label="Meta Title" htmlFor="meta-title"><Input id="meta-title" value={form.metaTitle} placeholder="Enter SEO meta title" onChange={(event) => updateField('metaTitle', event.target.value)} /></AdminFormField>
-              <AdminFormField label="Meta Description" htmlFor="meta-description"><Textarea id="meta-description" rows={2} value={form.metaDescription} placeholder="Enter SEO meta description" onChange={(event) => updateField('metaDescription', event.target.value)} /></AdminFormField>
+              <AdminFormField label="Meta Title" htmlFor="meta-title" error={fieldErrors.metaTitle}><Input id="meta-title" value={form.metaTitle} placeholder="Enter SEO meta title" onChange={(event) => updateField('metaTitle', event.target.value)} /></AdminFormField>
+              <AdminFormField label="Meta Description" htmlFor="meta-description" error={fieldErrors.metaDescription}><Textarea id="meta-description" rows={2} value={form.metaDescription} placeholder="Enter SEO meta description" onChange={(event) => updateField('metaDescription', event.target.value)} /></AdminFormField>
             </div>
           </div>
           <div className="border-t border-border pt-5">
             <div className="flex items-center justify-between"><div><h2 className="font-heading text-sm font-semibold uppercase tracking-wider text-foreground">FAQ Section</h2><p className="mt-1 text-xs text-muted-foreground">Add frequently asked questions with answers for SEO</p></div><Button type="button" variant="outline" size="sm" onClick={addFaq}><Plus className="mr-1.5 h-3.5 w-3.5" />Add FAQ</Button></div>
-            <div className="mt-4 space-y-4">{form.faqs.length === 0 && <p className="text-sm italic text-muted-foreground">No FAQs added yet. Click &quot;Add FAQ&quot; to create one.</p>}{form.faqs.map((faq, index) => <div key={index} className="rounded-lg border border-border bg-muted/20 p-4"><div className="flex items-center justify-between"><span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">FAQ {index + 1}</span><Button type="button" variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" onClick={() => removeFaq(index)}><Trash2 className="h-3.5 w-3.5" /></Button></div><div className="mt-3 space-y-3"><div><label className="text-xs font-medium text-muted-foreground" htmlFor={`faq-question-${index}`}>Question</label><Input id={`faq-question-${index}`} value={faq.question} onChange={(event) => updateFaq(index, 'question', event.target.value)} placeholder="Enter the question..." className="mt-1" /></div><div><label className="text-xs font-medium text-muted-foreground" htmlFor={`faq-answer-${index}`}>Answer</label><Textarea id={`faq-answer-${index}`} value={faq.answer} onChange={(event) => updateFaq(index, 'answer', event.target.value)} placeholder="Enter the answer..." rows={2} className="mt-1" /></div></div></div>)}</div>
+            <div className="mt-4 space-y-4">{form.faqs.length === 0 && <p className="text-sm italic text-muted-foreground">No FAQs added yet. Click &quot;Add FAQ&quot; to create one.</p>}{form.faqs.map((faq, index) => <div key={index} className="rounded-lg border border-border bg-muted/20 p-4"><div className="flex items-center justify-between"><span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">FAQ {index + 1}</span><Button type="button" variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" onClick={() => removeFaq(index)}><Trash2 className="h-3.5 w-3.5" /></Button></div><div className="mt-3 space-y-3"><div><label className="text-xs font-medium text-muted-foreground" htmlFor={`faq-question-${index}`}>Question</label><Input id={`faq-question-${index}`} value={faq.question} onChange={(event) => { clearFieldError(`faqs.${index}.question`); updateFaq(index, 'question', event.target.value); }} placeholder="Enter the question..." className={`mt-1 ${fieldErrors[`faqs.${index}.question`] ? 'border-destructive focus-visible:ring-destructive' : ''}`} />{fieldErrors[`faqs.${index}.question`] && <p className="mt-1 text-xs text-destructive">{fieldErrors[`faqs.${index}.question`]}</p>}</div><div><label className="text-xs font-medium text-muted-foreground" htmlFor={`faq-answer-${index}`}>Answer</label><Textarea id={`faq-answer-${index}`} value={faq.answer} onChange={(event) => { clearFieldError(`faqs.${index}.answer`); updateFaq(index, 'answer', event.target.value); }} placeholder="Enter the answer..." rows={2} className={`mt-1 ${fieldErrors[`faqs.${index}.answer`] ? 'border-destructive focus-visible:ring-destructive' : ''}`} />{fieldErrors[`faqs.${index}.answer`] && <p className="mt-1 text-xs text-destructive">{fieldErrors[`faqs.${index}.answer`]}</p>}</div></div></div>)}</div>
           </div>
         </div>
       </div>

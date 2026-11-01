@@ -11,15 +11,153 @@ export const API_URL = `${configuredApiUrl}/api`;
 // available to the server-side admin session check.
 export const BROWSER_API_URL = '/api';
 
+export class ApiRequestError extends Error {
+  constructor(
+    message: string,
+    public readonly field?: string,
+    public readonly status?: number,
+    public readonly fieldErrors: Record<string, string> = {},
+  ) {
+    super(message);
+    this.name = 'ApiRequestError';
+  }
+}
+
 export const api = axios.create({
   baseURL: BROWSER_API_URL,
   withCredentials: true,
   headers: { Accept: 'application/json' },
 });
 
+function getApiErrorMessage(error: unknown): string {
+  if (!axios.isAxiosError(error)) {
+    return error instanceof Error ? error.message : 'Something went wrong. Please try again.';
+  }
+
+  const status = error.response?.status;
+  const requestUrl = error.config?.url || '';
+
+  if (status === 401 && !requestUrl.includes('/auth/login')) {
+    return 'Your session has expired. Please log in again to continue.';
+  }
+  if (status === 403) {
+    return 'You do not have permission to perform this action. Please contact an administrator if you need access.';
+  }
+  if (status === 413) {
+    return 'The selected file is too large to upload. Choose a smaller file and try again.';
+  }
+  if (status !== undefined && status >= 500) {
+    return 'Something went wrong while processing your request. Please try again. If the problem continues, contact support.';
+  }
+  if (!error.response) {
+    return 'Unable to connect to the server. Check your internet connection and try again.';
+  }
+
+  const responseData = error.response.data as {
+    message?: unknown;
+    errors?: { path?: unknown; message?: unknown }[];
+  } | undefined;
+  const issues = responseData?.errors || [];
+  const firstIssue = issues[0];
+  const fieldPath = typeof firstIssue?.path === 'string' ? firstIssue.path : '';
+  const fieldMessage = typeof firstIssue?.message === 'string' ? firstIssue.message : '';
+  const serverMessage = typeof responseData?.message === 'string' ? responseData.message : fieldMessage;
+
+  if (status === 404 && /\/blogs\/(?:drafts|[^/]+\/draft)(?:$|\?)/.test(requestUrl)) {
+    return 'Draft saving is unavailable. Restart the backend server to enable draft autosave.';
+  }
+  if (fieldPath) return formatFieldValidationMessage(fieldPath, fieldMessage);
+
+  if (serverMessage === 'Invalid credentials') {
+    return 'The email or password is incorrect. Check your details and try again.';
+  }
+  if (serverMessage === 'Authentication required' || serverMessage === 'Invalid or expired token') {
+    return 'Your session has expired. Please log in again to continue.';
+  }
+  if (serverMessage === 'Admin access only' || serverMessage === 'Access denied') {
+    return 'You do not have permission to perform this action. Please contact an administrator if you need access.';
+  }
+
+  return serverMessage || 'We could not complete your request. Check the information and try again.';
+}
+
+const validationFieldLabels: Record<string, string> = {
+  blogTitle: 'Title',
+  url: 'URL Slug',
+  catName: 'Category Name',
+  seoTitle: 'Meta Title',
+  seoMeta: 'Meta Description',
+  blogImg: 'Image',
+  existingImages: 'Images',
+  primaryCta: 'Primary CTA',
+  secondaryCta: 'Secondary CTA',
+};
+
+function normalizeFieldPath(path: string): string {
+  const normalized = path
+    .replace(/^faq(?=\.|$)/, 'faqs')
+    .replace(/^blogImg(?=\.|$)/, 'image')
+    .replace(/^blogTitle$/, 'title')
+    .replace(/^url$/, 'slug')
+    .replace(/^seoTitle$/, 'metaTitle')
+    .replace(/^seoMeta$/, 'metaDescription');
+  if (!normalized.startsWith('faqs.') && !normalized.startsWith('stats.')) {
+    return normalized.replace(/^([^.]+)\.\d+(?:\..*)?$/, '$1');
+  }
+  return normalized;
+}
+
+function formatFieldValidationMessage(path: string, message: string): string {
+  const name = path.split('.').map((part) => {
+    if (/^\d+$/.test(part)) return `#${Number(part) + 1}`;
+    if (validationFieldLabels[part]) return validationFieldLabels[part];
+    return part.replace(/([a-z])([A-Z])/g, '$1 $2').replace(/^./, (character) => character.toUpperCase());
+  }).join(' ');
+
+  const maxLength = message.match(/(?:Too big: expected string to have <=|must be at most )(\d+)(?: characters)?/i)?.[1];
+  if (maxLength) return `${name} must be ${maxLength} characters or fewer.`;
+
+  const minLength = message.match(/(?:Too small: expected string to have >=|(?:should|must) be at least )(\d+)(?: characters)?/i)?.[1];
+  if (minLength) return `${name} must be at least ${minLength} characters.`;
+  if (/required/i.test(message)) return `${name} is required.`;
+  if (path === 'email' && /valid|email/i.test(message)) return 'Enter a valid Email Address.';
+  if (path.toLowerCase().includes('url') && /valid|url/i.test(message)) return `${name} must be a valid URL.`;
+
+  return `${name}: ${message}`;
+}
+
 api.interceptors.response.use(
   (response) => response,
-  (error) => Promise.reject(new Error(error.response?.data?.message || 'Unable to complete the request.')),
+  (error) => {
+    if (!axios.isAxiosError(error)) {
+      return Promise.reject(new ApiRequestError(
+        error instanceof Error ? error.message : 'Something went wrong. Please try again.'
+      ));
+    }
+
+    const responseData = error.response?.data as {
+      errors?: { path?: unknown; message?: unknown }[];
+    } | undefined;
+    const fieldErrors = Object.fromEntries((responseData?.errors || [])
+      .filter((issue): issue is { path: string; message: string } =>
+        typeof issue.path === 'string' && issue.path.length > 0 && typeof issue.message === 'string')
+      .map((issue) => [normalizeFieldPath(issue.path), formatFieldValidationMessage(issue.path, issue.message)]));
+    const responseMessage = (error.response?.data as { message?: unknown } | undefined)?.message;
+    if (typeof responseMessage === 'string' && !Object.keys(fieldErrors).length) {
+      if (/image file is required/i.test(responseMessage)) fieldErrors.image = 'Image is required.';
+      if (/at least one product image is required/i.test(responseMessage)) fieldErrors.images = 'At least one Image is required.';
+    }
+    const field = Object.keys(fieldErrors)[0]
+      ? Object.keys(fieldErrors)[0]
+      : undefined;
+
+    return Promise.reject(new ApiRequestError(
+      getApiErrorMessage(error),
+      field,
+      error.response?.status,
+      fieldErrors,
+    ));
+  },
 );
 
 export interface ApiUser {
@@ -38,6 +176,8 @@ export interface ApiBlog {
   content: string;
   isFeatured: boolean;
   isActive: boolean;
+  isDraft?: boolean;
+  draftUrl?: string;
   seoTitle?: string;
   seoMeta?: string;
   faq?: { question: string; answer: string }[];
@@ -59,9 +199,12 @@ export interface BlogPayload {
   seoMeta: string;
   faq: { question: string; answer: string }[];
   tags: string[];
+  isDraft?: boolean;
   image?: string;
   imageName?: string;
 }
+
+export type BlogDraftPayload = Partial<BlogPayload>;
 
 export interface ApiBanner {
   _id: string;
@@ -140,15 +283,18 @@ export interface HeroBannerSliderPayload {
   stats: { value: string; label: string }[]; iconKey?: string; sortOrder: number; isActive: boolean;
 }
 
-async function toBlogFormData(payload: BlogPayload): Promise<FormData> {
-  const { image, imageName, faq, tags, isFeatured, isActive, ...fields } = payload;
+async function toBlogFormData(payload: BlogDraftPayload): Promise<FormData> {
+  const { image, imageName, faq, tags, isFeatured, isActive, isDraft, ...fields } = payload;
   const formData = new FormData();
 
-  Object.entries(fields).forEach(([key, value]) => formData.append(key, value));
-  formData.append('isFeatured', String(isFeatured));
-  formData.append('isActive', String(isActive));
-  formData.append('faq', JSON.stringify(faq));
-  formData.append('tags', JSON.stringify(tags));
+  Object.entries(fields).forEach(([key, value]) => {
+    if (value !== undefined) formData.append(key, value);
+  });
+  if (isFeatured !== undefined) formData.append('isFeatured', String(isFeatured));
+  if (isActive !== undefined) formData.append('isActive', String(isActive));
+  if (isDraft !== undefined) formData.append('isDraft', String(isDraft));
+  if (faq !== undefined) formData.append('faq', JSON.stringify(faq));
+  if (tags !== undefined) formData.append('tags', JSON.stringify(tags));
 
   // Only submit a newly selected local image. Existing Cloudinary URLs remain unchanged.
   if (image?.startsWith('data:image/')) {
@@ -263,22 +409,16 @@ export const blogApi = {
     const formData = await toBlogFormData(payload);
     return (await api.post<{ data: ApiBlog }>('/blogs', formData)).data.data;
   },
+  createDraft: async (payload: BlogDraftPayload) => {
+    const formData = await toBlogFormData(payload);
+    return (await api.post<{ data: ApiBlog }>('/blogs/drafts', formData)).data.data;
+  },
+  updateDraft: async ({ id, payload }: { id: string; payload: BlogDraftPayload }) => {
+    const formData = await toBlogFormData(payload);
+    return (await api.patch<{ data: ApiBlog }>(`/blogs/${id}/draft`, formData)).data.data;
+  },
   update: async ({ id, payload }: { id: string; payload: Partial<BlogPayload> }) => {
-    const formData = await toBlogFormData({
-      blogTitle: payload.blogTitle || '',
-      url: payload.url || '',
-      category: payload.category || '',
-      excerpt: payload.excerpt || '',
-      content: payload.content || '',
-      isFeatured: payload.isFeatured || false,
-      isActive: payload.isActive ?? true,
-      seoTitle: payload.seoTitle || '',
-      seoMeta: payload.seoMeta || '',
-      faq: payload.faq || [],
-      tags: payload.tags || [],
-      image: payload.image,
-      imageName: payload.imageName,
-    });
+    const formData = await toBlogFormData(payload);
     return (await api.patch<{ data: ApiBlog }>(`/blogs/${id}`, formData)).data.data;
   },
   remove: (id: string) => api.delete(`/blogs/${id}`),

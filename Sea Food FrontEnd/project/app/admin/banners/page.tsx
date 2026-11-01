@@ -12,6 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { bannerApi, type ApiBanner, type BannerPayload } from '@/lib/api';
+import { useAdminFormErrors } from '@/components/admin/use-admin-form-errors';
 
 const pages = [
   { slug: 'about', name: 'About' }, { slug: 'products', name: 'Products' },
@@ -26,21 +27,22 @@ export default function AdminBannersPage() {
   const queryClient = useQueryClient();
   const [activePage, setActivePage] = useState<PageSlug>('about');
   const [form, setForm] = useState<FormState>(blank('about'));
-  const [error, setError] = useState<string | null>(null);
+  const { fieldErrors, formError: error, setFieldErrors, handleError, clearFieldError, clearErrors } = useAdminFormErrors();
   const { data: banners = [], isLoading, error: loadError } = useQuery({ queryKey: ['banners'], queryFn: bannerApi.list });
   const existing = useMemo(() => banners.find((banner) => banner.pageSlug === activePage), [banners, activePage]);
-  useEffect(() => { setForm(existing ? fromBanner(existing) : blank(activePage)); setError(null); }, [activePage, existing]);
+  useEffect(() => { setForm(existing ? fromBanner(existing) : blank(activePage)); clearErrors(); }, [activePage, existing]);
   const saveMutation = useMutation({
     mutationFn: (payload: FormState) => existing ? bannerApi.update(existing._id, payload) : bannerApi.create(payload),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['banners'] }); queryClient.invalidateQueries({ queryKey: ['public-banners'] }); },
-    onError: (requestError: Error) => setError(requestError.message),
+    onError: handleError,
   });
   const submit = (event: FormEvent) => {
     event.preventDefault();
-    if (!form.title.trim()) return setError('Banner title is required.');
-    if (form.description.trim().length < 3) return setError('Banner subtitle must be at least 3 characters.');
-    if (!existing && !form.image) return setError('Upload a background image before creating this banner.');
-    setError(null); saveMutation.mutate(form);
+    clearErrors();
+    if (!form.title.trim()) return setFieldErrors({ title: 'Title is required.' });
+    if (form.description.trim().length < 3) return setFieldErrors({ description: 'Subtitle must be at least 3 characters.' });
+    if (!existing && !form.image) return setFieldErrors({ image: 'Background Image is required.' });
+    saveMutation.mutate(form);
   };
   return <div className="space-y-6">
     <AdminPageHeader title="Edit Page Banners" description="Manage the About, Products, Blog, and Contact page hero banners." />
@@ -48,10 +50,10 @@ export default function AdminBannersPage() {
       <div className="grid grid-cols-2 border-b border-border sm:grid-cols-4">{pages.map((page) => <button key={page.slug} type="button" onClick={() => setActivePage(page.slug)} className={`px-3 py-4 text-sm font-medium transition-colors ${activePage === page.slug ? 'border-b-2 border-primary bg-primary/5 text-primary' : 'text-muted-foreground hover:bg-muted/50'}`}>{page.name}</button>)}</div>
       <div className="grid gap-6 p-4 lg:grid-cols-2 lg:p-6">
         <div className="space-y-5">
-          <AdminFormField label="Background Image" htmlFor="banner-image" required hint="Recommended: 1600px wide image"><ImageUpload value={form.image} fileName={form.imageName} onChange={(image, imageName) => setForm((state) => ({ ...state, image, imageName: imageName || '' }))} id="banner-image" aspectRatio="16/9" /></AdminFormField>
-          <AdminFormField label="Title" htmlFor="title" required><Input id="title" value={form.title} onChange={(event) => setForm((state) => ({ ...state, title: event.target.value }))} placeholder={`Enter ${form.pageName} banner title`} /></AdminFormField>
-          <AdminFormField label="Subtitle" htmlFor="subtitle" required><Textarea id="subtitle" rows={3} value={form.description} onChange={(event) => setForm((state) => ({ ...state, description: event.target.value }))} placeholder="Short supporting message" /></AdminFormField>
-          <div className="grid grid-cols-2 gap-4"><AdminFormField label="Overlay start" htmlFor="overlay-start"><Input id="overlay-start" type="color" value={form.overlayStart} onChange={(event) => setForm((state) => ({ ...state, overlayStart: event.target.value }))} className="h-10 p-1" /></AdminFormField><AdminFormField label="Overlay end" htmlFor="overlay-end"><Input id="overlay-end" type="color" value={form.overlayEnd} onChange={(event) => setForm((state) => ({ ...state, overlayEnd: event.target.value }))} className="h-10 p-1" /></AdminFormField></div>
+          <AdminFormField label="Background Image" htmlFor="banner-image" required error={fieldErrors.image} hint="Recommended: 1600px wide image"><ImageUpload value={form.image} fileName={form.imageName} onChange={(image, imageName) => { clearFieldError('image'); setForm((state) => ({ ...state, image, imageName: imageName || '' })); }} id="banner-image" aspectRatio="16/9" className={fieldErrors.image ? 'rounded-lg ring-1 ring-destructive' : undefined} /></AdminFormField>
+          <AdminFormField label="Title" htmlFor="title" required error={fieldErrors.title}><Input id="title" value={form.title} onChange={(event) => { clearFieldError('title'); setForm((state) => ({ ...state, title: event.target.value })); }} placeholder={`Enter ${form.pageName} banner title`} /></AdminFormField>
+          <AdminFormField label="Subtitle" htmlFor="subtitle" required error={fieldErrors.description}><Textarea id="subtitle" rows={3} value={form.description} onChange={(event) => { clearFieldError('description'); setForm((state) => ({ ...state, description: event.target.value })); }} placeholder="Short supporting message" /></AdminFormField>
+          <div className="grid grid-cols-2 gap-4"><AdminFormField label="Overlay start" htmlFor="overlay-start" error={fieldErrors.overlayStart}><Input id="overlay-start" type="color" value={form.overlayStart} onChange={(event) => { clearFieldError('overlayStart'); setForm((state) => ({ ...state, overlayStart: event.target.value })); }} className="h-10 p-1" /></AdminFormField><AdminFormField label="Overlay end" htmlFor="overlay-end" error={fieldErrors.overlayEnd}><Input id="overlay-end" type="color" value={form.overlayEnd} onChange={(event) => { clearFieldError('overlayEnd'); setForm((state) => ({ ...state, overlayEnd: event.target.value })); }} className="h-10 p-1" /></AdminFormField></div>
           <div className="flex items-center justify-between rounded-lg border border-border p-4"><span className="text-sm font-medium">Show banner on website</span><Switch checked={form.isActive} onCheckedChange={(isActive) => setForm((state) => ({ ...state, isActive }))} /></div>
           {error && <p className="text-sm text-destructive">{error}</p>}
           <Button type="submit" className="w-full" disabled={saveMutation.isPending}>{saveMutation.isPending ? 'Saving...' : <><Save className="mr-2 h-4 w-4" />{existing ? `Update ${form.pageName} Banner` : `Create ${form.pageName} Banner`}</>}</Button>

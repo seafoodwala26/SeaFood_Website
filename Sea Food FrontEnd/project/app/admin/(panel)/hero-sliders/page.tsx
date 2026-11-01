@@ -13,6 +13,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { heroBannerSliderApi, type ApiHeroBannerSlider, type HeroBannerSliderPayload } from '@/lib/api';
 import { heroSliderKeys } from '@/lib/hooks/use-hero-sliders';
+import { useAdminFormErrors } from '@/components/admin/use-admin-form-errors';
 
 interface FormState extends HeroBannerSliderPayload { imageName: string; }
 
@@ -32,10 +33,10 @@ export default function AdminHeroSlidersPage() {
   const [editing, setEditing] = useState<ApiHeroBannerSlider | null>(null);
   const [formOpen, setFormOpen] = useState(false);
   const [form, setForm] = useState<FormState>(blank());
-  const [error, setError] = useState('');
+  const { fieldErrors, formError: error, setFieldErrors, handleError, clearFieldError, clearErrors } = useAdminFormErrors();
   const { data: slides = [], isLoading, error: loadError } = useQuery({ queryKey: heroSliderKeys.list, queryFn: heroBannerSliderApi.list });
 
-  useEffect(() => { setForm(editing ? fromApi(editing) : blank()); setError(''); }, [editing]);
+  useEffect(() => { setForm(editing ? fromApi(editing) : blank()); clearErrors(); }, [editing]);
 
   const refresh = () => {
     queryClient.invalidateQueries({ queryKey: heroSliderKeys.list });
@@ -44,22 +45,30 @@ export default function AdminHeroSlidersPage() {
   const save = useMutation({
     mutationFn: (payload: FormState) => editing ? heroBannerSliderApi.update(editing._id, payload) : heroBannerSliderApi.create(payload),
     onSuccess: () => { refresh(); setEditing(null); setForm(blank()); setFormOpen(false); },
-    onError: (requestError: Error) => setError(requestError.message),
+    onError: handleError,
   });
-  const remove = useMutation({ mutationFn: heroBannerSliderApi.remove, onSuccess: refresh, onError: (requestError: Error) => setError(requestError.message) });
+  const remove = useMutation({ mutationFn: heroBannerSliderApi.remove, onSuccess: refresh, onError: handleError });
 
-  const update = <K extends keyof FormState>(key: K, value: FormState[K]) => setForm((state) => ({ ...state, [key]: value }));
+  const update = <K extends keyof FormState>(key: K, value: FormState[K]) => {
+    clearFieldError(String(key));
+    setForm((state) => ({ ...state, [key]: value }));
+  };
   const submit = (event: FormEvent) => {
     event.preventDefault();
-    if (!form.image) return setError('Hero image is required.');
-    if (!form.title.trim() || !form.highlight.trim() || form.description.trim().length < 10) return setError('Title, highlight and a 10 character description are required.');
-    setError(''); save.mutate(form);
+    clearErrors();
+    if (!form.image) return setFieldErrors({ image: 'Hero Image is required.' });
+    const errors: Record<string, string> = {};
+    if (!form.title.trim()) errors.title = 'Title is required.';
+    if (!form.highlight.trim()) errors.highlight = 'Highlight is required.';
+    if (form.description.trim().length < 10) errors.description = 'Description must be at least 10 characters.';
+    if (Object.keys(errors).length) return setFieldErrors(errors);
+    save.mutate(form);
   };
   const setStat = (index: number, key: 'value' | 'label', value: string) => update('stats', form.stats.map((stat, i) => i === index ? { ...stat, [key]: value } : stat));
 
-  const openCreate = () => { setEditing(null); setForm(blank()); setError(''); setFormOpen(true); };
+  const openCreate = () => { setEditing(null); setForm(blank()); clearErrors(); setFormOpen(true); };
   const openEdit = (slide: ApiHeroBannerSlider) => { setEditing(slide); setFormOpen(true); };
-  const closeForm = () => { setEditing(null); setForm(blank()); setError(''); setFormOpen(false); };
+  const closeForm = () => { setEditing(null); setForm(blank()); clearErrors(); setFormOpen(false); };
 
   return <div className="space-y-6">
     <AdminPageHeader title="Hero Banner Sliders" description="Create and manage the homepage hero slides without changing page banners." />
@@ -78,15 +87,15 @@ export default function AdminHeroSlidersPage() {
 
       <form onSubmit={submit} className="space-y-5 rounded-xl border border-border bg-card p-5 shadow-soft">
         <div className="flex items-center justify-between"><h2 className="font-heading text-lg font-semibold">{editing ? 'Edit Slide' : 'Create Slider'}</h2><Button type="button" variant="ghost" size="sm" onClick={closeForm}>Cancel</Button></div>
-        <AdminFormField label="Hero Image" htmlFor="hero-image" required hint="Recommended: 1920px wide"><ImageUpload id="hero-image" value={form.image} fileName={form.imageName} onChange={(image, imageName) => setForm((state) => ({ ...state, image, imageName: imageName || '' }))} aspectRatio="16/9" /></AdminFormField>
-        <AdminFormField label="Image Alt Text" htmlFor="hero-alt" required><Input id="hero-alt" value={form.alt} onChange={(event) => update('alt', event.target.value)} /></AdminFormField>
-        <div className="grid gap-4 sm:grid-cols-2"><AdminFormField label="Badge" htmlFor="hero-badge" required><Input id="hero-badge" value={form.badge} onChange={(event) => update('badge', event.target.value)} placeholder="Sustainably Sourced" /></AdminFormField><AdminFormField label="Icon" htmlFor="hero-icon"><select id="hero-icon" value={form.iconKey} onChange={(event) => update('iconKey', event.target.value)} className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"><option value="fish">Fish</option><option value="shell">Shell</option><option value="anchor">Anchor</option></select></AdminFormField></div>
-        <div className="grid gap-4 sm:grid-cols-2"><AdminFormField label="Title" htmlFor="hero-title" required><Input id="hero-title" value={form.title} onChange={(event) => update('title', event.target.value)} /></AdminFormField><AdminFormField label="Highlight" htmlFor="hero-highlight" required><Input id="hero-highlight" value={form.highlight} onChange={(event) => update('highlight', event.target.value)} /></AdminFormField></div>
-        <AdminFormField label="Description" htmlFor="hero-description" required><Textarea id="hero-description" rows={4} value={form.description} onChange={(event) => update('description', event.target.value)} /></AdminFormField>
-        <div className="grid gap-4 sm:grid-cols-2"><AdminFormField label="Primary CTA Label" htmlFor="primary-label"><Input id="primary-label" value={form.primaryCta.label} onChange={(event) => update('primaryCta', { ...form.primaryCta, label: event.target.value })} /></AdminFormField><AdminFormField label="Primary CTA URL" htmlFor="primary-href"><Input id="primary-href" value={form.primaryCta.href} onChange={(event) => update('primaryCta', { ...form.primaryCta, href: event.target.value })} /></AdminFormField></div>
-        <div className="grid gap-4 sm:grid-cols-2"><AdminFormField label="Secondary CTA Label" htmlFor="secondary-label"><Input id="secondary-label" value={form.secondaryCta.label} onChange={(event) => update('secondaryCta', { ...form.secondaryCta, label: event.target.value })} /></AdminFormField><AdminFormField label="Secondary CTA URL" htmlFor="secondary-href"><Input id="secondary-href" value={form.secondaryCta.href} onChange={(event) => update('secondaryCta', { ...form.secondaryCta, href: event.target.value })} /></AdminFormField></div>
-        <div className="space-y-3"><div className="flex items-center justify-between"><span className="text-sm font-medium">Stats</span><Button type="button" variant="outline" size="sm" disabled={form.stats.length >= 6} onClick={() => update('stats', [...form.stats, { value: '', label: '' }])}><Plus className="mr-1 h-3.5 w-3.5" />Add</Button></div>{form.stats.map((stat, index) => <div key={index} className="flex gap-2"><Input placeholder="40+" value={stat.value} onChange={(event) => setStat(index, 'value', event.target.value)} /><Input placeholder="Countries Served" value={stat.label} onChange={(event) => setStat(index, 'label', event.target.value)} /><Button type="button" variant="ghost" size="icon" onClick={() => update('stats', form.stats.filter((_, i) => i !== index))} aria-label="Remove stat"><Trash2 className="h-4 w-4" /></Button></div>)}</div>
-        <div className="grid gap-4 sm:grid-cols-2"><AdminFormField label="Display Order" htmlFor="sort-order"><Input id="sort-order" type="number" min={0} value={form.sortOrder} onChange={(event) => update('sortOrder', Number(event.target.value))} /></AdminFormField><div className="flex items-center justify-between rounded-lg border border-border px-3"><span className="text-sm font-medium">Active</span><Switch checked={form.isActive} onCheckedChange={(value) => update('isActive', value)} /></div></div>
+        <AdminFormField label="Hero Image" htmlFor="hero-image" required error={fieldErrors.image} hint="Recommended: 1920px wide"><ImageUpload id="hero-image" value={form.image} fileName={form.imageName} onChange={(image, imageName) => { clearFieldError('image'); setForm((state) => ({ ...state, image, imageName: imageName || '' })); }} aspectRatio="16/9" className={fieldErrors.image ? 'rounded-lg ring-1 ring-destructive' : undefined} /></AdminFormField>
+        <AdminFormField label="Image Alt Text" htmlFor="hero-alt" required error={fieldErrors.alt}><Input id="hero-alt" value={form.alt} onChange={(event) => update('alt', event.target.value)} /></AdminFormField>
+        <div className="grid gap-4 sm:grid-cols-2"><AdminFormField label="Badge" htmlFor="hero-badge" required error={fieldErrors.badge}><Input id="hero-badge" value={form.badge} onChange={(event) => update('badge', event.target.value)} placeholder="Sustainably Sourced" /></AdminFormField><AdminFormField label="Icon" htmlFor="hero-icon" error={fieldErrors.iconKey}><select id="hero-icon" value={form.iconKey} onChange={(event) => update('iconKey', event.target.value)} className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"><option value="fish">Fish</option><option value="shell">Shell</option><option value="anchor">Anchor</option></select></AdminFormField></div>
+        <div className="grid gap-4 sm:grid-cols-2"><AdminFormField label="Title" htmlFor="hero-title" required error={fieldErrors.title}><Input id="hero-title" value={form.title} onChange={(event) => update('title', event.target.value)} /></AdminFormField><AdminFormField label="Highlight" htmlFor="hero-highlight" required error={fieldErrors.highlight}><Input id="hero-highlight" value={form.highlight} onChange={(event) => update('highlight', event.target.value)} /></AdminFormField></div>
+        <AdminFormField label="Description" htmlFor="hero-description" required error={fieldErrors.description}><Textarea id="hero-description" rows={4} value={form.description} onChange={(event) => update('description', event.target.value)} /></AdminFormField>
+        <div className="grid gap-4 sm:grid-cols-2"><AdminFormField label="Primary CTA Label" htmlFor="primary-label" error={fieldErrors['primaryCta.label']}><Input id="primary-label" value={form.primaryCta.label} onChange={(event) => { clearFieldError('primaryCta.label'); update('primaryCta', { ...form.primaryCta, label: event.target.value }); }} /></AdminFormField><AdminFormField label="Primary CTA URL" htmlFor="primary-href" error={fieldErrors['primaryCta.href']}><Input id="primary-href" value={form.primaryCta.href} onChange={(event) => { clearFieldError('primaryCta.href'); update('primaryCta', { ...form.primaryCta, href: event.target.value }); }} /></AdminFormField></div>
+        <div className="grid gap-4 sm:grid-cols-2"><AdminFormField label="Secondary CTA Label" htmlFor="secondary-label" error={fieldErrors['secondaryCta.label']}><Input id="secondary-label" value={form.secondaryCta.label} onChange={(event) => { clearFieldError('secondaryCta.label'); update('secondaryCta', { ...form.secondaryCta, label: event.target.value }); }} /></AdminFormField><AdminFormField label="Secondary CTA URL" htmlFor="secondary-href" error={fieldErrors['secondaryCta.href']}><Input id="secondary-href" value={form.secondaryCta.href} onChange={(event) => { clearFieldError('secondaryCta.href'); update('secondaryCta', { ...form.secondaryCta, href: event.target.value }); }} /></AdminFormField></div>
+        <div className="space-y-3"><div className="flex items-center justify-between"><span className="text-sm font-medium">Stats</span><Button type="button" variant="outline" size="sm" disabled={form.stats.length >= 6} onClick={() => update('stats', [...form.stats, { value: '', label: '' }])}><Plus className="mr-1 h-3.5 w-3.5" />Add</Button></div>{form.stats.map((stat, index) => <div key={index} className="flex gap-2"><div className="flex-1"><Input placeholder="40+" value={stat.value} onChange={(event) => { clearFieldError(`stats.${index}.value`); setStat(index, 'value', event.target.value); }} className={fieldErrors[`stats.${index}.value`] ? 'border-destructive focus-visible:ring-destructive' : undefined} />{fieldErrors[`stats.${index}.value`] && <p className="mt-1 text-xs text-destructive">{fieldErrors[`stats.${index}.value`]}</p>}</div><div className="flex-1"><Input placeholder="Countries Served" value={stat.label} onChange={(event) => { clearFieldError(`stats.${index}.label`); setStat(index, 'label', event.target.value); }} className={fieldErrors[`stats.${index}.label`] ? 'border-destructive focus-visible:ring-destructive' : undefined} />{fieldErrors[`stats.${index}.label`] && <p className="mt-1 text-xs text-destructive">{fieldErrors[`stats.${index}.label`]}</p>}</div><Button type="button" variant="ghost" size="icon" onClick={() => update('stats', form.stats.filter((_, i) => i !== index))} aria-label="Remove stat"><Trash2 className="h-4 w-4" /></Button></div>)}</div>
+        <div className="grid gap-4 sm:grid-cols-2"><AdminFormField label="Display Order" htmlFor="sort-order" error={fieldErrors.sortOrder}><Input id="sort-order" type="number" min={0} value={form.sortOrder} onChange={(event) => update('sortOrder', Number(event.target.value))} /></AdminFormField><div className="flex items-center justify-between rounded-lg border border-border px-3"><span className="text-sm font-medium">Active</span><Switch checked={form.isActive} onCheckedChange={(value) => update('isActive', value)} /></div></div>
         <Button type="submit" className="w-full" disabled={save.isPending}><Save className="mr-2 h-4 w-4" />{editing ? 'Update Slide' : 'Create Slide'}</Button>
       </form>
     </div>}
