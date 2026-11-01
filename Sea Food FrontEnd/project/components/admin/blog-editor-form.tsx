@@ -421,9 +421,11 @@ export function BlogEditorForm({ mode, blogId }: BlogEditorFormProps) {
       seoTitle: form.metaTitle.trim(), seoMeta: form.metaDescription.trim(), faq: form.faqs,
       tags: form.tags,
       image: form.image, imageName: form.imageName,
-    });x
+    });
   };
 
+
+  
   const handleCancel = () => {
     if (mode === 'create') {
       try {
