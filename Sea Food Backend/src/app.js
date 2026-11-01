@@ -75,8 +75,19 @@ app.use('/api/site-configuration', siteConfigurationRoutes);
 app.use('/api/hero-banner-sliders', heroBannerSliderRoutes);
 app.use('/api/inquiries', inquiryRoutes);
 
-app.use((req, res) => {res.status(404).json({ status: 'fail', message: 'Route not found' });});
+app.use((req, res) => {
+  res.status(404).json({ status: 'fail', message: 'The requested page or resource could not be found.' });
+});
 
-app.use((err, req, res, next) => {console.error(err);res.status(err.statusCode || 500).json({ status: 'error', message: err.message || 'Something went wrong' });});
+app.use((err, req, res, next) => {
+  console.error(err);
+  if (res.headersSent) return next(err);
+
+  const statusCode = err.statusCode || 500;
+  const message = statusCode >= 500
+    ? 'Something went wrong while processing your request. Please try again. If the problem continues, contact support.'
+    : err.message || 'We could not complete your request. Please check your information and try again.';
+  return res.status(statusCode).json({ status: 'error', message });
+});
 
 module.exports = app;

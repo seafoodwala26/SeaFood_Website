@@ -92,8 +92,8 @@ export default function AdminBlogPage() {
                         {p.blogImg?.url && <Image src={p.blogImg.url} alt={p.blogTitle} fill sizes="56px" className="object-cover" />}
                       </div>
                       <div className="min-w-0 max-w-xs">
-                        <p className="truncate font-medium text-foreground">{p.blogTitle}</p>
-                        <p className="truncate text-xs text-muted-foreground">{p.url}</p>
+                        <p className="truncate font-medium text-foreground">{p.blogTitle || 'Untitled draft'}</p>
+                        <p className="truncate text-xs text-muted-foreground">{p.isDraft ? p.draftUrl || 'Draft' : p.url}</p>
                       </div>
                     </div>
                   </td>
@@ -108,15 +108,19 @@ export default function AdminBlogPage() {
                   </td>
                   <td className="px-5 py-3.5">
                     <div className="flex items-center gap-2">
-                      <Button
-                        size="sm"
-                        variant={p.isActive !== false ? 'default' : 'outline'}
-                        className="min-w-24"
-                        disabled={toggleActiveMutation.isPending}
-                        onClick={() => toggleActiveMutation.mutate({ id: p._id, isActive: p.isActive === false })}
-                      >
-                        {p.isActive !== false ? 'Active' : 'Inactive'}
-                      </Button>
+                      {p.isDraft ? (
+                        <Badge variant="outline">Draft</Badge>
+                      ) : (
+                        <Button
+                          size="sm"
+                          variant={p.isActive !== false ? 'default' : 'outline'}
+                          className="min-w-24"
+                          disabled={toggleActiveMutation.isPending}
+                          onClick={() => toggleActiveMutation.mutate({ id: p._id, isActive: p.isActive === false })}
+                        >
+                          {p.isActive !== false ? 'Active' : 'Inactive'}
+                        </Button>
+                      )}
                       {p.isFeatured && <Badge className="bg-brand-accent/10 text-brand-accent border border-brand-accent/20">Featured</Badge>}
                     </div>
                   </td>

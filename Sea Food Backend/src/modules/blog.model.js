@@ -4,12 +4,10 @@ const faqItemSchema = new mongoose.Schema(
   {
     question: {
       type: String,
-      required: [true, 'FAQ question is required'],
       trim: true,
     },
     answer: {
       type: String,
-      required: [true, 'FAQ answer is required'],
       trim: true,
     },
   },
@@ -20,7 +18,8 @@ const blogSchema = new mongoose.Schema(
   {
     blogTitle: {
       type: String,
-      required: [true, 'Blog title is required'],
+      required: [function () { return !this.isDraft; }, 'Blog title is required'],
+      default: '',
       trim: true,
     },
     url: {
@@ -29,20 +28,31 @@ const blogSchema = new mongoose.Schema(
       trim: true,
       unique: true,
     },
+    draftUrl: {
+      type: String,
+      trim: true,
+    },
+    isDraft: {
+      type: Boolean,
+      default: false,
+    },
     category: {
       type: String,
-      required: [true, 'Category is required'],
+      required: [function () { return !this.isDraft; }, 'Category is required'],
+      default: '',
       trim: true,
     },
     excerpt: {
       type: String,
-      required: [true, 'Excerpt is required'],
+      required: [function () { return !this.isDraft; }, 'Excerpt is required'],
+      default: '',
       trim: true,
       maxlength: 320,
     },
     content: {
       type: String,
-      required: [true, 'Content is required'],
+      required: [function () { return !this.isDraft; }, 'Content is required'],
+      default: '',
       trim: true,
     },
     isFeatured: {
