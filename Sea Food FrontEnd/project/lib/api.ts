@@ -24,7 +24,7 @@ export class ApiRequestError extends Error {
 }
 
 export const api = axios.create({
-  baseURL: BROWSER_API_URL,
+  baseURL: typeof window === 'undefined' ? API_URL : BROWSER_API_URL,
   withCredentials: true,
   headers: { Accept: 'application/json' },
 });

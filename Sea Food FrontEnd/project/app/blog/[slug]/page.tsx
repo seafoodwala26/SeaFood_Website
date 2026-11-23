@@ -15,7 +15,7 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion';
 import { BlogPostingSchema, FAQSchema } from '@/lib/seo/schema';
-import { blogApi } from '@/lib/api';
+import { ApiRequestError, blogApi } from '@/lib/api';
 import { mapApiBlog } from '@/lib/utils/catalog';
 import { siteConfig } from '@/lib/constants/site';
 import { buildPageMetadata } from '@/lib/seo/metadata';
@@ -79,9 +79,18 @@ interface PageProps {
   params: Promise<{ slug: string }>;
 }
 
+async function getPublicBlog(slug: string) {
+  try {
+    return await blogApi.publicGet(slug);
+  } catch (error) {
+    if (error instanceof ApiRequestError && error.status === 404) return null;
+    throw error;
+  }
+}
+
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
-  const apiPost = await blogApi.publicGet(slug).catch(() => null);
+  const apiPost = await getPublicBlog(slug);
   const post = apiPost ? mapApiBlog(apiPost) : null;
   if (!post) {
     return buildPageMetadata({
@@ -103,7 +112,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function BlogDetailPage({ params }: PageProps) {
   const { slug } = await params;
-  const apiPost = await blogApi.publicGet(slug).catch(() => null);
+  const apiPost = await getPublicBlog(slug);
   const post = apiPost ? mapApiBlog(apiPost) : null;
   if (!post) notFound();
 

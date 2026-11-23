@@ -424,7 +424,6 @@ export function BlogEditorForm({ mode, blogId }: BlogEditorFormProps) {
     });
   };
 
-
   
   const handleCancel = () => {
     if (mode === 'create') {
