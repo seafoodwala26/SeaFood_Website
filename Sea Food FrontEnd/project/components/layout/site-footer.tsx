@@ -93,7 +93,9 @@ export function SiteFooter() {
 
         <div className="mt-10 flex flex-col gap-4 border-t border-white/10 pb-12 pt-8 text-sm text-white/50 sm:flex-row sm:items-center sm:justify-between sm:pb-0">
           <p>&copy; {new Date().getFullYear()} {siteConfig.name}. All rights reserved.</p>
-          <div className="grid grid-cols-2 gap-x-6 gap-y-2 sm:flex sm:flex-wrap"><Link href="/privacy" className="hover:text-brand-primary-light">Privacy Policy</Link><Link href="/terms" className="hover:text-brand-primary-light">Terms of Service</Link></div>
+          <div className="flex flex-wrap gap-x-6 gap-y-2">
+            <Link href="/privacy-policy" className="hover:text-brand-primary-light">Privacy Policy</Link>
+          </div>
         </div>
       </div>
     </footer>

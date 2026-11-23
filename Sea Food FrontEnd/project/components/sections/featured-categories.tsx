@@ -10,7 +10,10 @@ import { useInView } from '@/lib/hooks/use-in-view';
 
 export function FeaturedCategories() {
   const { ref, isInView } = useInView<HTMLElement>();
-  const { data: categories = [], isLoading } = usePublicCategories({ enabled: isInView });
+  const { data: categories, isLoading, isError, isSuccess } = usePublicCategories({ enabled: isInView });
+  const availableCategories = categories ?? [];
+
+  if (isSuccess && availableCategories.length === 0) return null;
 
   return (
     <section ref={ref} className="section-padding relative overflow-hidden">
@@ -24,20 +27,26 @@ export function FeaturedCategories() {
             align="left"
             className="max-w-2xl"
           />
-          <div className="hidden items-center gap-2 rounded-full border border-brand-primary/20 bg-brand-primary/5 px-4 py-2 text-sm font-medium text-brand-primary lg:flex">
-            <Fish className="h-4 w-4" />
-            {categories.length} Categories Available
-          </div>
+          {availableCategories.length > 0 && (
+            <div className="hidden items-center gap-2 rounded-full border border-brand-primary/20 bg-brand-primary/5 px-4 py-2 text-sm font-medium text-brand-primary lg:flex">
+              <Fish className="h-4 w-4" />
+              {availableCategories.length} Categories Available
+            </div>
+          )}
         </div>
 
         <div className="mt-12">
-          {isLoading ? (
+          {!isInView || isLoading ? (
             <ContentSlider itemsPerView={{ base: 1, sm: 2, md: 3, lg: 4 }} showDots={false} gap={24} autoPlay={false}>
               {Array.from({ length: 4 }).map((_, i) => <CategoryCardSkeleton key={i} />)}
             </ContentSlider>
+          ) : isError && availableCategories.length === 0 ? (
+            <p className="rounded-xl border border-border bg-card p-5 text-sm text-muted-foreground">
+              Categories are temporarily unavailable. Please try again later.
+            </p>
           ) : (
             <ContentSlider itemsPerView={{ base: 1, sm: 2, md: 3, lg: 4 }} showDots={false} gap={24}>
-              {categories.map((cat, i) => (
+              {availableCategories.map((cat, i) => (
                 <CategoryCard key={cat.slug} category={cat} priority={i < 2} />
               ))}
             </ContentSlider>
