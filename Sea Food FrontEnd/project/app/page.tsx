@@ -5,6 +5,7 @@ import { FeaturedProducts } from '@/components/sections/featured-products';
 import { CompanyIntro } from '@/components/sections/company-intro';
 import { WhyChooseUs } from '@/components/sections/why-choose-us';
 import { Stats } from '@/components/sections/stats';
+import { HomeSeafoodContent } from '@/components/sections/home-seafood-content';
 import { Testimonials } from '@/components/sections/testimonials';
 import { LatestBlogs } from '@/components/sections/latest-blogs';
 import { FAQ } from '@/components/sections/faq';
@@ -21,7 +22,8 @@ export default function Home() {
       <CompanyIntro />
       <WhyChooseUs />
       <Stats />
-      <Testimonials />
+      <HomeSeafoodContent />
+      {/* <Testimonials /> */}
       <LatestBlogs />
       <FAQ />
       <CTAInquiry />

@@ -137,6 +137,7 @@ export default async function BlogDetailPage({ params }: PageProps) {
       <section className="blog-detail-hero">
         <div className="container-wide">
           <Breadcrumbs
+            mobileCompact
             items={[
               { name: 'Blog', href: '/blog' },
               { name: post.title, href: `/blog/${post.slug}` },
